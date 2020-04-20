@@ -1,0 +1,168 @@
+﻿
+@{
+    ViewData["Title"] = "Nueva cartera";
+}
+
+<div id="app">
+    <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+    <div class="container">
+        <div class="row">
+            <div class="col-md-2">
+                <h3>Nueva Cartera </h3>
+                <label for="fondeadora">Fondeadora:</label>
+                <select class="form-control" id="fondeador" v-model="fondeador" @@change="seleccionoFondeador">
+                    <option value="0">Seleccione un fondeador</option>
+                    <option v-for="fondeador in fondeadores" :value="fondeador.fondeadorID">{{fondeador.nombre}}</option>
+                </select>
+                <br />
+
+                <label for="capital">Capital:</label>
+                <input type="text" id="capital" class="form-control" :value="sumatoria"  disabled/>
+                <br />
+
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" id="cantidad" class="form-control" :value="seleccionados.length" disabled/>
+                <br />
+                <hr />
+                <button class="btn btn-primary btn-small" @@click="GuardarCartera">Guardar</button>
+                <br />
+                <br />
+                <a href="/Carteras/Todas"><button class="btn btn-danger btn-small">Cancelar</button></a>
+            </div>
+            <div class="col-md-10">
+                <h3 v-if="creditos.length == 0">Cargando datos...</h3>
+                <table v-if="creditos.length != 0" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nro.</th>
+                            <th>Moneda</th>
+                            <th>Préstamo</th>
+                            <th>Estado</th>
+                            <th>Cuotas</th>
+                            <th>Fecha Inicial</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="credito in creditos" class="credito" :data-credito="credito.nCodCred" @@click="Seleccionar($event, credito)">
+                            <td>{{credito.nCodCred}}</td>
+                            <td>{{credito.nMoneda}}</td>
+                            <td>{{formatMoney(credito.nPrestamo)}}</td>
+                            <td>{{credito.nEstado}}</td>
+                            <td>{{credito.nNroCuotas}}</td>
+                            <td>{{fecha(credito.dFecIni)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts{
+
+    <script>
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                creditos: [],
+                fondeadores:[],
+                seleccionados: [],
+                fondeador: 0,
+                cumplimiento: [],
+                api: ""
+            },
+            methods: {
+                GetIndex: function (array, attr, value) {
+                    for (var i = 0; i < array.length; i += 1) {
+                        if (array[i][attr] === value) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                },
+                seleccionoFondeador: async function () {
+                    this.cumplimiento = await fetch(this.api + "Creditos/Cumplimiento?FondeadorID=" + this.fondeador)
+                        .then(response => response.json())
+                    this.seleccionados = [];
+                    $(".credito").each(function (index) {
+                        $(this).removeClass("table-danger");
+                    });
+
+                    $(".credito").each(function (index) {
+                        if (!vm.cumplimiento.find(x=>x.nCodCred == $(this).data("credito")))
+                            $(this).addClass("table-danger");
+                    });
+                    
+                    
+                },
+                GuardarCartera: async function () {
+                    let cartera = {
+                        CarteraID: 0,
+                        FondeadorID: this.fondeador,
+                        Creditos: this.seleccionados.map(x=>x.nCodCred).join(',')                        
+                    };
+                    console.log(cartera);
+
+                    var formData = new FormData();
+                    formData.append('CarteraID', cartera.CarteraID);
+                    formData.append('FondeadorID', cartera.FondeadorID);
+                    formData.append('Creditos', cartera.Creditos);
+
+                    let res = await fetch(this.api + "Carteras/Save", {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json());
+
+                    if (res != 0)
+                        alert("Se guardó exitosamente la cartera");
+
+                    window.location.href = "/Carteras/Todas";
+                },
+                Seleccionar: function (evento, credito) {
+                    if (this.fondeador == 0) {
+                        alert("Debes selecciona antes un fondeador");
+                        return;
+                    }
+                    if (!vm.cumplimiento.find(x => x.nCodCred == credito.nCodCred)) {
+                        alert("Este crédito no cumple con las condiciones requeridas por " + this.fondeadores[this.fondeador].nombre + ". Deberás seleccionar otro.");
+                        return;
+                    }
+                    $(evento.target).parent().toggleClass("table-primary");
+
+                    let index = this.GetIndex(this.seleccionados, "nCodCred", credito.nCodCred);
+
+                    if (index == -1)
+                        this.seleccionados.push(credito);
+                    else
+                        this.seleccionados.splice(index, 1);
+                },
+                formatMoney: function(num) {
+                            return(num.toFixed(2) // always two decimal digits
+                                .replace('.', ',') // replace decimal point character with ,
+                                .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
+                  )
+                },
+                fecha: function (date) {
+                    return moment(date).format("DD/MM/YYYY")
+                }
+            },
+            computed: {
+                sumatoria: function () {
+                    let sum = 0;
+                    for (var i = 0; i < this.seleccionados.length; i++) 
+                        sum = parseFloat(sum) + parseFloat(this.seleccionados[i].nPrestamo);                    
+                    return this.formatMoney(sum);
+                }
+            },
+            async mounted() {
+                this.api = $("#endpoint").val();
+                this.creditos = (await fetch(this.api + "Creditos/All").then(x => x.json())).reverse();
+                this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
+            }
+        });
+
+    </script>
+
+}
