@@ -1,0 +1,328 @@
+﻿@{
+    ViewData["Title"] = "Nueva recompra";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+    <div id="app">
+        <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <input type="text" name="busqueda" id="busqueda" v-model="busqueda" style="width:100%" @@keyup.enter="buscar" placeholder="ID del crédito" class="form-control" />
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-sm btn-success" @@click="buscar" style="width:100%" data-toggle="modal" data-target="#busquedaModal">Buscar</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table class="table table-hover table-bordered table-sm" style="font-size:10pt">
+                                <thead>
+                                    <tr>
+                                        <th>CreditoID</th>
+                                        <th>Monto</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Cuotas</th>
+                                        <th>Producto</th>
+                                        <th>PersonaID</th>
+                                        <th>Nombre/Razón Social</th>
+                                        <th>Opciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(c, index) in creditosFiltrados" @@click="seleccionar($event, index)">
+                                        <td>{{c.nCodCred}}</td>
+                                        <td>{{c.nPrestamo.toFixed(2)}}</td>
+                                        <td>{{GetDate(c.dFecIni)}}</td>
+                                        <td>{{c.nNroCuotas}}</td>
+                                        <td>{{c.producto.cNomCod}}</td>
+                                        <td>{{c.dni != null ? c.dni : c.ruc}}</td>
+                                        <td>{{c.dni != null ? c.nombres : c.razonSocial}}</td>
+                                        <td>
+                                            <a href="#" data-toggle="modal" data-target="#detalleModal" @@click="detalleSeleccion[0] = c">Detalle</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2" v-if="creditos.length != 0">
+                            <label for="pagina">Página:</label>
+                            <select id="pagina" class="form-control" @@change="changePage" v-model="page">
+                                <option v-for="item in creditos[0].pages">
+                                    {{item}}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2" v-if="creditos.length != 0">
+                            <label for="porpagina">Por Página:</label>
+                            <input type="number" name="porpagina" class="form-control" @@keyup="changePage" v-model="pagesize" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="total">Total</label>
+                    <input type="text" class="form-control" name="total" :value="total" />
+                    <br />
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#confirmarGuardar">Guardar</button>
+                </div>
+            </div>
+
+        </div>
+
+
+
+        <div class="modal fade" id="detalleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Detalle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-hover table-bordered table-sm" style="font-size:10pt">
+                            <thead>
+                                <tr>
+                                    <th>CreditoID</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Inicio</th>
+                                    <th>Cuotas</th>
+                                    <th>Producto</th>
+                                    <th>PersonaID</th>
+                                    <th>Nombre/Razón Social</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(c, index) in detalleSeleccion">
+                                    <td>{{c.nCodCred}}</td>
+                                    <td>{{c.nPrestamo.toFixed(2)}}</td>
+                                    <td>{{GetDate(c.dFecIni)}}</td>
+                                    <td>{{c.nNroCuotas}}</td>
+                                    <td>{{c.producto.cNomCod}}</td>
+                                    <td>{{c.dni != null ? c.dni : c.ruc}}</td>
+                                    <td>{{c.dni != null ? c.nombres : c.razonSocial}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>        <div class="modal fade" id="confirmarGuardar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Confirmas que deseas guardar la recompra de total <b>{{total}}</b>, integrada por los créditos: </p>
+                        <ul>
+                            <li v-for="c in creditosFiltrados.filter(x=>x.selected)"><b>ID:</b> {{c.nCodCred}} - <b>Monto:</b> {{c.nPrestamo.toFixed(2)}}</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="busquedaModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Búsqueda</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-sm table-bordered table-hover" id="tableBusqueda">
+                            <thead>
+                                <tr>
+                                    <th>Nro.</th>
+                                    <th>Moneda</th>
+                                    <th>Capital</th>
+                                    <th>Precio</th>
+                                    <th>Cuotas</th>
+                                    <th>Fecha Inicial</th>
+                                    <th>Producto</th>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                </tr>
+                            </thead>
+                            <tbody id="main">
+                                <tr v-for="credito in resBusqueda"
+                                    :class="{ 'table-primary': credito.selected }"
+                                    :id="credito.nCodCred"
+                                    @@click="Seleccionar($event, credito, 1)">
+                                    <td>{{credito.nCodCred}}</td>
+                                    <td>{{Moneda(credito.nMoneda)}}</td>
+                                    <td>{{formatMoney(credito.nPrestamo)}}</td>
+                                    <td>{{credito.precio}}</td>
+                                    <td>{{credito.nNroCuotas}}</td>
+                                    <td>{{fecha(credito.dFecIni)}}</td>
+                                    <td>{{credito.producto.cNomCod}}</td>
+                                    <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
+                                    <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>s
+        </div>
+
+        @section Scripts{
+
+            <script>
+                var vm = new Vue({
+                    el: '#app',
+                    data: {
+                        creditos: [],
+                        creditosFiltrados: [],
+                        api: "",
+                        recompras: [],
+                        total: 0,
+                        busqueda: "",
+                        resBusqueda: [],
+                        page: 1,
+                        pagesize: 10,
+                        producto: 0,
+                        recompra: {
+                            recompraID: "",
+                            fechaCreacion: "",
+                            fechaModificacion: "",
+                            fechaConfirmacion: "",
+                            archivo: "",
+                            monto: "",
+                            creditos: [],
+                            confirmed: false
+                        },
+                        detalleSeleccion:[]
+                    },
+                    methods: {
+                        changePage: async function () {
+                            await this.buscarGeneral();
+                        },
+                        buscarGeneral: async function () {
+                            var formData1 = new FormData();
+                            formData1.append('page', this.page);
+                            formData1.append('pagesize', this.pagesize);
+                            formData1.append('producto', this.producto);
+
+                            this.creditos = await fetch(this.api + "Creditos/All", {
+                                method: 'POST',
+                                body: formData1
+                            }).then(response => response.json());
+
+                            this.creditos.forEach(x => {
+                                x.selected = false;
+                            });
+                        },
+                        buscar: async function () {
+                            let res = await fetch(this.api + "Creditos/Find?query=" + this.busqueda).then(response => response.json());
+                            res.forEach(x => {
+                                x.selected = false;
+                            });
+
+                            this.resBusqueda = res;
+                        },
+                        seleccionar: function (event, index) {
+                            $(event.target).parent().toggleClass("table-primary");
+                            this.creditosFiltrados[index].selected = !this.creditosFiltrados[index].selected;
+                            this.total = this.sumatoria().toFixed(2);
+                        },
+                        GetDate: function (strDate) {
+                            return moment(strDate).format("DD-MM-YYYY");
+                        },
+                        sumatoria: function () {
+                            let res = 0;
+                            this.creditosFiltrados.filter(x => x.selected).forEach(x => {
+                                res += x.nPrestamo;
+                            });
+                            return res;
+                        },
+                        guardar: function () {
+                            this.recompra.recompraID = Math.floor(Math.random() * 9999) + 1000;
+                            this.creditosFiltrados.filter(x => x.selected).forEach(ele => vm.recompra.creditos.push(ele));
+                            this.recompra.fechaCreacion = moment().format("YYYYMMDD");
+                            this.recompra.fechaModificacion = moment().format("YYYYMMDD");
+                            this.recompra.fechaConfirmacion = "";
+                            this.recompra.monto = this.total;
+                            this.recompra.confirmed = false;
+
+                            this.recompras.push(this.recompra);
+
+                            window.localStorage.setItem("recompras", JSON.stringify(this.recompras));
+                            window.location.href = "@(ViewBag.domain+"Recompras")"
+                        },
+                        formatMoney: function (num) {
+                            return num.toFixed(2)
+                        },
+                        fecha: function (date) {
+                            return moment(date).format("DD/MM/YYYY")
+                        },
+                        Estado: function (estado) {
+                            switch (estado) {
+                                case 1:
+                                    return "Registrado";
+                                case 2:
+                                    return "Vigente";
+                                case 3:
+                                    return "Vencido";
+                                case 4:
+                                    return "Pagado";
+                            }
+                        },
+                        Moneda: function (moneda) {
+                            switch (moneda) {
+                                case 1:
+                                    return "S/";
+                                case 2:
+                                    return "USD";
+                            }
+                        }
+                    },
+                    async mounted() {
+                        this.api = $("#endpoint").val();
+
+                        var formData = new FormData();
+                        formData.append('page', this.page);
+                        formData.append('pagesize', this.pagesize);
+                        formData.append('producto', this.producto);
+                        if (this.repro == 1)
+                            formData.append('repro', true);
+
+                        this.creditos = await fetch(this.api + "Creditos/All", {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(response => response.json());
+
+                        this.creditosFiltrados = this.creditos;
+                        this.creditos.forEach(x => {
+                            x.selected = false;
+                        });
+
+                        this.recompras = JSON.parse(localStorage.getItem("recompras"));
+                    }
+                });
+
+            </script>
+
+        }

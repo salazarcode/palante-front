@@ -1,0 +1,663 @@
+﻿@{
+    ViewData["Title"] = "Nueva venta de cartera";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+    <div id="app">
+        <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="fondeadora">Fondeador:</label>
+                    <select class="form-control" id="fondeador" v-model="fondeador" @@change="">
+                        <option value="0">Seleccionar</option>
+                        <option v-for="fondeador in fondeadores" :value="fondeador.fondeadorID">{{fondeador.nombre}}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="Producto">Producto:</label>
+                    <select class="form-control" id="producto" v-model="producto" @@change="" :disabled="fondeador == 0 && carteraID == ''">
+                        <option value="0">Todos</option>
+                        <option v-for="(producto, index) in productos" :value="producto.nValor">{{producto.cNomCod}}</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <br />
+                    <img v-if="generalLoader" src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
+                </div>
+            </div>
+            <hr />
+            <div class="row" v-if="fondeador != 0 && producto != 0">
+                <div class="col-md-1">
+                    <button class="btn btn-sm btn-success" style="width:100%" data-toggle="modal" data-target="#exampleModal">Buscar</button>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div 
+                                 v-if="seleccionados.length == 0"
+                                 style="border:dashed 3px gray; height:300px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center"
+                                 >
+                                Busca y selecciona algunos créditos
+                            </div>
+                            <table v-if="seleccionados.length != 0" id="creds" class="table table-sm table-bordered table-hover" style="font-size:10pt">
+                                <thead>
+                                    <tr>
+                                        <th>Nro.</th>
+                                        <th>Moneda</th>
+                                        <th>Capital</th>
+                                        <th>Precio</th>
+                                        <th>Cuotas</th>
+                                        <th>Fecha Vcto</th>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="main">
+                                    <tr v-for="credito in seleccionados"
+                                        :id="credito.nCodCred">
+                                        <td>{{credito.nCodCred}}</td>
+                                        <td>{{Moneda(credito.nMoneda)}}</td>
+                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
+                                        <td>{{credito.precio}}</td>
+                                        <td>{{credito.nNroCuotas}}</td>
+                                        <td>{{fecha(credito.dFecVcto)}}</td>
+                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
+                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-md-2">
+                    <div class="row">
+                        <div class="col">
+                            <label for="capital">CarteraID:</label>
+                            <input type="text" id="cartera" class="form-control" :value="carteraID" disabled />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="capital">Capital:</label>
+                            <input type="text" id="capital" class="form-control" :value="sumatoria" disabled />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="cantidad">Cantidad:</label>
+                            <input type="number" id="cantidad" class="form-control" :value="seleccionados.length" disabled />
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button class="btn btn-primary btn-small" @@click="GuardarCartera">Guardar</button>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@(ViewBag.domain+"Carteras")" class="btn btn-danger btn-small">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Búsqueda</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="parametros" v-if="pantallaBusqueda == 0">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <select class="form-control" v-model="tipoBusqueda">
+                                        <option value="0">Tipo Búsqueda</option>
+                                        <option value="ruc">RUC</option>
+                                        <option value="dni">DNI</option>
+                                        <option value="credito">Credito</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text"
+                                           name="busqueda"
+                                           id="busqueda"
+                                           v-model="busqueda"
+                                           style="width:100%"
+                                           placeholder="Escribe un item y presiona enter"
+                                           @@keyup.enter="agregarItem"
+                                           class="form-control" />
+                                </div>
+                                <div class="col-md-6" style="margin-top:20px;">
+                                    <p>Elementos: <span class="badge badge-light">{{busquedaItems.length != 0 ? busquedaItems.length : 'Agrega items a la búsqueda'}}</span></p>
+
+                                    <div class="list-group">
+                                        <a href="#"
+                                           v-for="(item,index) in busquedaItems"
+                                           @@click="eliminarItem(index)"
+                                            class="list-group-item list-group-item-action"
+                                           >
+                                            {{item}}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="Cargando" v-if="pantallaBusqueda == 1">
+                            <img src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
+                        </div>
+                        <div id="resultado" v-if="pantallaBusqueda == 2">
+                            <button class="btn btn-secondary" @@click="pantallaBusqueda = 0">Atras</button>
+                            <br />
+                            <div v-if="busquedaSinResultado && !busquedaLoader" class="alert alert-warning" role="alert">
+                                No se encontraron resultados
+                            </div>
+                            <table style="margin-top:20px" v-if="!busquedaSinResultado && !busquedaLoader" class="table table-sm table-bordered table-hover" id="tableBusqueda">
+                                <thead>
+                                    <tr>
+                                        <th>Nro.</th>
+                                        <th>Nro.</th>
+                                        <th>Moneda</th>
+                                        <th>Capital</th>
+                                        <th>Precio</th>
+                                        <th>Cuotas</th>
+                                        <th>Fecha Vcto.</th>
+                                        <th>Producto</th>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="main">
+                                    <tr v-for="credito in resBusqueda"
+                                        :class="{ 'table-primary': credito.selected, 'table-danger': !credito.available }"
+                                        :id="credito.nCodCred"
+                                        @@click="Seleccionar($event, credito, 1)">
+                                        <td>
+                                            <input 
+                                                   type="checkbox"                                                  
+                                                   class="form-control"
+                                                   :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)">
+                                        </td>
+                                        <td>{{credito.nCodCred}}</td>
+                                        <td>{{Moneda(credito.nMoneda)}}</td>
+                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
+                                        <td>{{credito.precio}}</td>
+                                        <td>{{credito.nNroCuotas}}</td>
+                                        <td>{{fecha(credito.dFecVcto)}}</td>
+                                        <td>{{credito.producto.cNomCod}}</td>
+                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
+                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-sm btn-success" @@click="buscar">Buscar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="verModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Detalle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table id="creds" class="table table-sm table-bordered table-hover" style="font-size:10pt">
+                            <thead>
+                                <tr>
+                                    <th>Nro.</th>
+                                    <th>Moneda</th>
+                                    <th>Capital</th>
+                                    <th>Cuotas</th>
+                                    <th>Fecha Inicial</th>
+                                    <th>Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="main">
+                                <tr v-for="(credito,index) in seleccionados">
+                                    <td>{{credito.nCodCred}}</td>
+                                    <td>{{credito.nMoneda == 1 ? 'Soles': 'Dólares'}}</td>
+                                    <td>{{credito.nPrestamo.toFixed(2)}}</td>
+                                    <td>{{credito.nNroCuotas}}</td>
+                                    <td>{{fecha2(credito.dFecIni)}}</td>
+                                    <td><a href="#" @@click="remove(index)">Quitar</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="mensajeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Alerta!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {{mensaje}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Continuar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="confirmarAgregarModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Confirmar Agregar</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {{confirmarAgregar}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" @@click="seleccionarNeto">Agregar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    @section Scripts{
+
+        <script>
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                creditos: [],
+                tamanioPagina: 10,
+                filtrados: [],
+                fondeadores: [],
+                productos: [],
+                producto: @ViewBag.productoID,
+                seleccionados: [],
+                fondeador: @ViewBag.fondeadorID,
+                cumplimiento: [],
+                cumplimientoNeto: [],
+                api: "",
+                carteraID: 0,
+                busquedaItems: [],
+                busqueda: "",
+                resBusqueda: [],
+                modalBusqueda: "",
+                busquedaLoader: false,
+                busquedaSinResultado: false,
+                cartera: "",
+                carteraID: @ViewBag.carteraID,
+                repro: @ViewBag.repro,
+                tipoBusqueda: 0,
+                mensajeCargando: "Cargando...",
+                mensaje: "Cargando...",
+                confirmarAgregar: "",
+                repro: false,
+                page: 1,
+                pagesize: 5,
+                generalLoader: false,
+                pantallaBusqueda: 0,
+                parametros: {
+                    evento: "",
+                    credito: "",
+                    busqueda: ""
+                }
+            },
+            methods: {
+                agregarItem: function () {
+                    let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
+                    if (finding == undefined)
+                        this.busquedaItems.push(this.busqueda.trim());
+                    else {
+                        this.mensaje = "Ya agregaste ese item";
+                        $("#mensajeModal").modal("show");
+                    }
+                    this.busqueda = "";
+                },
+                eliminarItem: function (index) {                    
+                    this.busquedaItems.splice(index,1);
+                },
+                remove: function (index) {
+                    let cred = this.creditos.find(x => x.nCodCred == vm.seleccionados[index].nCodCred).nCodCred;
+                    this.creditos.find(x => x.nCodCred == cred).selected = !(this.creditos.find(x => x.nCodCred == cred).selected);
+                    this.seleccionados.splice(index, 1);
+                    $("#" + credito.nCodCred).removeClass("table-primary");
+                },
+                fecha2: function (date) {
+                    return moment(date).format("DD/MM/YYYY")
+                },
+                changePage: async function () {
+                    await this.buscarGeneral();
+                },
+                buscarGeneral: async function () {
+                    /*
+                    var formData1 = new FormData();
+                    formData1.append('page', this.page);
+                    formData1.append('pagesize', this.pagesize);
+                    formData1.append('producto', this.producto);
+                    if (this.repro == 1)
+                        formData1.append('repro', true);
+
+                    this.generalLoader = true;
+                    this.creditos = await fetch(this.api + "Creditos/All", {
+                        method: 'POST',
+                        body: formData1
+                    }).then(response => response.json());
+                    this.generalLoader = false;
+
+                    this.creditos.forEach(x => {
+                        x.selected = false;
+                        x.available = false;
+                    });
+
+                    var formData = new FormData();
+                    formData.append('FondeadorID', this.fondeador);
+                    formData.append('creditos', this.creditos.map(x => x.nCodCred).join(","));
+
+                    this.generalLoader = true;
+                    this.cumplimiento = await fetch(this.api + "Creditos/Cumplimiento", {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json());
+
+                    this.generalLoader = false;
+                    this.cumplimientoNeto = this.cumplimiento.map(f => f.nCodCred);
+
+                    this.creditos.map(el => el.nCodCred)
+                        .forEach(nCodCred => {
+                            if (vm.cumplimientoNeto.includes(nCodCred)) {
+                                vm.creditos.find(ele => ele.nCodCred == nCodCred).available = true;
+                                $("#" + nCodCred).toggleClass("table-danger");
+                            }
+                        });
+                    this.creditos.filter(x => vm.seleccionados.map(d => d.nCodCred).includes(x.nCodCred)).forEach(v => {
+                        $("#" + v.nCodCred).toggleClass("table-primary");
+                        vm.creditos.find(ele => ele.nCodCred == v.nCodCred).selected = true;
+                    })
+                    */
+                },
+                seleccionoFondeador: async function () {
+                    this.seleccionados = [];
+
+                    this.page = 1;
+                    await this.buscarGeneral();
+                },
+                seleccionarProducto: async function () {
+                    this.quitarTodos();
+                    let res;
+                    $("#creds tr").removeClass("table-primary");
+
+                    this.page = 1;
+                    await this.buscarGeneral();
+                },
+                seleccionarTodos: function () {
+                    vm.seleccionados = [];
+
+                    this.filtrados.filter(x => x.available == true).forEach(e => {
+                        vm.seleccionados.push(e);
+                        e.selected = true;
+                    });
+                },
+                quitarTodos: async function () {
+                    vm.seleccionados = [];
+
+                    this.filtrados.filter(x => x.available == true).forEach(e => {
+                        e.selected = false;
+                    });
+                },
+                GuardarNeto: async function () {
+                    if (this.producto == -1) {
+                        this.mensaje = "Debes seleccionar un producto para la cartera";
+                        $("#mensaje").modal("show");
+                        return;
+                    }
+                    let cartera = {
+                        CarteraID: this.carteraID,
+                        FondeadorID: this.fondeador,
+                        Creditos: this.seleccionados.map(x => x.nCodCred).join(','),
+                        ProductoID: this.producto
+                    };
+
+                    var formData = new FormData();
+                    formData.append('CarteraID', cartera.CarteraID);
+                    formData.append('FondeadorID', cartera.FondeadorID);
+                    formData.append('Creditos', cartera.Creditos);
+                    formData.append('ProductoID', cartera.ProductoID);
+
+                    let res = await fetch(this.api + "Carteras/Save", {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json());
+
+                    return res;
+
+                },
+                GuardarCartera: async function () {
+                    let res = await this.GuardarNeto();
+
+                    if (res != 0) {
+                        this.mensaje = "Se guardó exitosamente la cartera";
+                        $("#mensajeModal").modal("show");
+                    }
+
+                    window.location.href = '@(ViewBag.domain+"Carteras")';
+                },
+                getAvailableClass: function (credito) {
+                    if (credito.available) {
+                        if (credito.selected || vm.seleccionados.map(x => x.nCodCred).includes(credito.nCodCred))
+                            return "table-primary";
+                    }
+                    else
+                        return "table-danger";
+                },
+                seleccionarNeto: function (evento, credito, busqueda) {
+                    if (this.parametros.credito != "") {
+                        evento = this.parametros.evento;
+                        credito = this.parametros.credito;
+                        busqueda = this.parametros.busqueda;
+                    }
+
+                    if (busqueda == 1)
+                        this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected = !(this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected);
+                    else
+                        this.creditos.find(x => x.nCodCred == credito.nCodCred).selected = !(this.creditos.find(x => x.nCodCred == credito.nCodCred).selected);
+
+                    let index = this.seleccionados.findIndex(x => x.nCodCred == credito.nCodCred)
+
+                    if (index == -1) {
+                        this.seleccionados.push(credito);
+                        $("#" + credito.nCodCred).addClass("table-primary");
+                    } else {
+                        this.seleccionados.splice(index, 1);
+                        $("#" + credito.nCodCred).removeClass("table-primary");
+                    }
+                },
+                Seleccionar: function (evento, credito, busqueda = 0) {
+                    if (this.fondeador == 0) {
+                        this.mensaje = "Debes seleccionar antes un fondeador";
+                        $("#mensajeModal").modal("show");
+                        return;
+                    }
+                    if (!vm.cumplimiento.map(x => x.nCodCred).includes(credito.nCodCred)) {
+                        this.parametros.evento = evento;
+                        this.parametros.credito = credito;
+                        this.parametros.busqueda = busqueda;
+
+                        let elFondeador = this.fondeadores.find(x => x.fondeadorID == this.fondeador).nombre;
+                        this.confirmarAgregar = "Este crédito no cumple con las condiciones requeridas por " + elFondeador + ". ¿Deseas agregarlo aún así?";
+                        $("#confirmarAgregarModal").modal("show");
+                        return;
+                    }
+
+                    this.seleccionarNeto(evento, credito, busqueda);
+                },
+                buscar: async function () {
+                    if (this.tipoBusqueda == 0) {
+                        this.mensaje = "Debes seleccionar un tipo de búsqueda";
+                        $("#mensajeModal").modal("show");
+                        return;
+                    }
+                    this.pantallaBusqueda = 1;
+                    var formData = new FormData();
+                    formData.append('Tipo', this.tipoBusqueda);
+                    formData.append('Query', this.busquedaItems.join(","));
+
+                    let res = await fetch(this.api + "Creditos/Search", {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json());
+
+
+                    if (res.length == 0) {
+                        this.busquedaSinResultado = true;
+                    } else {
+                        this.busquedaSinResultado = false;
+                        this.busquedaLoader = false;
+                        res.forEach(x => {
+                            x.selected = false;
+                            x.available = false;
+                        });
+
+                        var formData = new FormData();
+                        formData.append('FondeadorID', this.fondeador);
+                        formData.append('creditos', res.map(x => x.nCodCred).join(","));
+
+                        let cumplimiento = await fetch(this.api + "Creditos/Cumplimiento", {
+                            method: 'POST',
+                            body: formData
+                        }).then(response => response.json());
+                        cumplimiento.forEach(x => vm.cumplimiento.push(x));
+
+                        let cumplimientoNeto = cumplimiento.map(f => f.nCodCred);
+
+                        res.forEach(found => {
+                            if (cumplimientoNeto.includes(found.nCodCred)) {
+                                found.available = true;
+                            }
+                        });
+
+                        res.forEach(found => {
+                            if (vm.seleccionados.map(val => val.nCodCred).includes(found.nCodCred)) {
+                                found.selected = true;
+                            }
+                        });
+
+                        this.pantallaBusqueda = 2;
+                        this.resBusqueda = res;
+                    }
+                },
+                filtrarRepro: function () {
+                    this.quitarTodos();
+                    this.repro = !this.repro;
+                    if (this.repro) {
+                        this.filtrados = this.creditos.filter(x => x.esRepro != 0);
+                    }
+                    else {
+                        this.filtrados = this.creditos.filter(x => x.esRepro == 0);
+                    }
+                },
+                formatMoney: function (num) {
+                    return num.toFixed(2)
+                },
+                fecha: function (date) {
+                    return moment(date).format("DD/MM/YYYY")
+                },
+                Estado: function (estado) {
+                    switch (estado) {
+                        case 1:
+                            return "Registrado";
+                        case 2:
+                            return "Vigente";
+                        case 3:
+                            return "Vencido";
+                        case 4:
+                            return "Pagado";
+                    }
+                },
+                Moneda: function (moneda) {
+                    switch (moneda) {
+                        case 1:
+                            return "S/";
+                        case 2:
+                            return "USD";
+                    }
+                }
+            },
+            computed: {
+                sumatoria: function () {
+                    let sum = 0;
+                    for (var i = 0; i < this.seleccionados.length; i++)
+                        sum = parseFloat(sum) + parseFloat(this.seleccionados[i].precio);
+                    return this.formatMoney(sum);
+                },
+            },
+            async mounted() {
+                this.api = $("#endpoint").val();
+
+                this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
+                this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
+
+                if (this.carteraID != 0) {
+                    this.generalLoader = true;
+                    this.cartera = await fetch(this.api + "Carteras/Find?CarteraID=" + vm.carteraID + "&ProductoID=" + vm.producto).then(x => x.json());
+                    this.generalLoader = false;
+
+                    this.fondeador = this.cartera.fondeador.fondeadorID;
+                    this.producto = this.cartera.productoID;
+                    this.seleccionados = this.cartera.creditos;
+
+                    this.seleccionados = this.cartera.creditos;
+
+                    $("#fondeador").prop("disabled", true);
+                    $("#producto").prop("disabled", true);
+                }
+                else {
+                    this.carteraID = await this.GuardarNeto();
+                }
+                this.generalLoader = false;
+
+                this.modalBusqueda = $('#exampleModal');
+
+                this.modalBusqueda.on('hidden.bs.modal', function (e) {
+                    vm.resBusqueda = [];
+                });
+            }
+        });
+
+        </script>
+
+    }

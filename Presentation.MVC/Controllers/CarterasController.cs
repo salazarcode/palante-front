@@ -11,21 +11,32 @@ namespace Presentation.MVC.Controllers
     {
         private readonly IConfiguration _conf;
         private readonly string apiEndpoint;
+        private readonly string domain;
         public CarterasController(IConfiguration conf)
         {
             _conf = conf;
             apiEndpoint = _conf.GetSection("apiendpoint").Value;
+            domain = _conf.GetSection("domain").Value;
         }
 
-        public IActionResult Nueva()
+        public IActionResult Crear(int carteraID = 0, int productoID = 0, int fondeadorID = 0, int repro = 0)
         {
             ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
+
+            ViewBag.carteraID = carteraID;
+            ViewBag.productoID = productoID;
+            ViewBag.fondeadorID = fondeadorID;
+            ViewBag.repro = repro;
+
             return View();
+
         }
 
-        public IActionResult Todas()
+        public IActionResult Index()
         {
             ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
             return View();
         }
     }

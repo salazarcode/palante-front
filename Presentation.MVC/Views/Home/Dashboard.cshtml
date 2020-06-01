@@ -1,0 +1,187 @@
+﻿@{
+    ViewData["Title"] = "Venta de Cartera";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+
+<h3>@ViewBag.dir</h3>
+<div class="container" id="app">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card card-outline card-warning" style="width: 100%;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                Gestión de Fondeador
+                            </div>
+                        </div>
+                        <div class="card-body">
+                        </div>
+                        <div class="card-footer">
+                            <a href="@(ViewBag.domain+"Fondeadores")" class="btn btn-primary">Ver</a>
+                            <a href="@(ViewBag.domain+"Fondeadores/Crear")" class="btn btn-success">Crear</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card card-outline card-primary" style="width: 100%">
+                        <div class="card-header">
+                            <div class="card-title">
+                                Venta
+                            </div>
+                        </div>
+                        <div class="card-body">
+                        </div>
+                        <div class="card-footer">
+                            <a href="@(ViewBag.domain+"Carteras")" class="btn btn-primary">Ver</a>
+                            <a href="#" data-toggle="modal" data-target="#crearcartera" class="btn btn-success">Crear</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-outline card-primary" style="width: 100%">
+                        <div class="card-header">
+                            <div class="card-title">
+                                Pagos
+                            </div>
+                        </div>
+                        <div class="card-body">
+                        </div>
+                        <div class="card-footer">
+                            <a href="@(ViewBag.domain+"Pagos")" class="btn btn-primary">Ver</a>
+                            <a href="@(ViewBag.domain+"Pagos/Crear")" class="btn btn-success">Crear</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-outline card-primary" style="width: 100%">
+                        <div class="card-header">
+                            <div class="card-title">
+                                Recompra
+                            </div>
+                        </div>
+                        <div class="card-body">
+                        </div>
+                        <div class="card-footer">
+                            <a href="@(ViewBag.domain+"Recompras")" class="btn btn-primary">Ver</a>
+                            <a href="@(ViewBag.domain+"Recompras/Crear")" class="btn btn-success">Crear</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div id="calendar" style="font-size:8pt !important"></div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="crearcartera" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Crear Cartera</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Fondeador: </label>
+                            <div class="list-group">
+                                <a href="#"
+                                   v-for="(fondeador, index) in fondeadores"
+                                   @@click="f = fondeador.fondeadorID"
+                                   :class="{'list-group-item':true, 'list-group-item-action':true, 'active':f == fondeador.fondeadorID}">
+                                    {{fondeador.nombre}}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Productos: </label>
+                            <div class="list-group">
+                                <a href="#"
+                                   v-for="(producto, index) in productos"
+                                   @@click="p = producto.nValor"
+                                   :class="{'list-group-item':true, 'list-group-item-action':true, 'active': p == producto.nValor}">
+                                    {{producto.cNomCod}}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Reprogramado: </label>
+                            <div class="list-group">
+                                <button type="button" @@click="rp = 1" :class="{'list-group-item':true, 'list-group-item-action':true, 'active':rp == 1 }">Sí</button>
+                                <button type="button" @@click="rp = 0" :class="{'list-group-item':true, 'list-group-item-action':true, 'active':rp == 0 }">No</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="crearCartera">Crear Cartera</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @@click="">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <section class="col-lg-3 connectedSortable ui-sortable">
+            </section>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts{
+
+
+
+    <script>
+        $(document).ready(function () {
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                locale: 'es',
+                plugins: ['dayGrid', 'timeGrid', 'list' ]
+            });
+
+            calendar.render();
+        });
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                api: '@ViewBag.endpoint',
+                productos: [],
+                p: 0,
+                fondeadores: [],
+                f: 0,
+                rp: 0
+            },
+            methods: {
+                crearCartera: function () {
+                    location.href = "@(ViewBag.domain+"Carteras/crear")" + "?fondeadorID=" + vm.f + "&productoID=" + vm.p + "&repro=" + vm.rp; 
+                }
+            },
+            async mounted() {
+                this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
+                this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
+            }
+        });
+
+    </script>
+
+}
+
+

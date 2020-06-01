@@ -18,6 +18,7 @@ namespace Presentation.MVC.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _conf;
         private readonly string apiEndpoint;
+        private readonly string domain;
 
         public HomeController(ILogger<HomeController> logger, IWebHostEnvironment env, IConfiguration conf)
         {
@@ -25,23 +26,22 @@ namespace Presentation.MVC.Controllers
             _env = env;
             _conf = conf;
             apiEndpoint = _conf.GetSection("apiendpoint").Value;
+            domain = _conf.GetSection("domain").Value;
         }
 
         public IActionResult Index()
         {
             ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
             return View();
         }
 
-        public IActionResult Privacy()
+        public IActionResult Dashboard()
         {
+            ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
     }
 }

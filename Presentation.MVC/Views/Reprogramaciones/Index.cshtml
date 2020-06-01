@@ -1,0 +1,170 @@
+﻿@{
+    ViewData["Title"] = "Reprogramaciones";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+    <div class="container" id="app">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-primary btn-sm" @@click="crear">Nueva</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-10">
+                <table class="table table-hover table-bordered table-sm" style="margin-top:20px">
+                    <thead>
+                        <tr>
+                            <th>ReproID</th>
+                            <th>Fecha Creación</th>
+                            <th>Última Modificación</th>
+                            <th>Fecha confirmación</th>
+                            <th colspan="3">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(r, index) in pagos" :class="r.confirmed ? 'table-primary' : 'tr'">
+                            <td>{{r.pagoID}}</td>
+                            <td>{{GetDate(r.fechaCreacion)}}</td>
+                            <td>{{GetDate(r.fechaModificacion)}}</td>
+                            <td>{{r.fechaConfirmacion != "" ? GetDate(r.fechaConfirmacion) : "Sin confirmar"}}</td>
+                            <td>
+                                <a href="#" @@click="seleccionado = r" data-toggle="modal" data-target="#modal-detalle" >Ver</a>
+                            </td>
+                            <td>
+                                <a href="#" @@click="">Editar</a>
+                            </td>
+                            <td>
+                                <a href="#" @@click="seleccionado = r" data-toggle="modal" data-target="#modal-eliminar">Eliminar</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+
+
+        <div class="modal fade" id="modal-detalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Detalle Reprogramación</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {{seleccionado.pagoID}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Editar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="modal-eliminar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Eliminar Reprogramación</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Eliminar reprogramación ID: {{seleccionado.pagoID}}.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Eliminar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        @section Scripts{
+
+                <script>
+                var vm = new Vue({
+                    el: '#app',
+                    data: {
+                        pagos: [],
+                        n: "",
+                        mensaje: "",
+                        seleccionado: ""
+                    },
+                    methods: {
+                        GetDate: function (strDate) {
+                            return moment(strDate, "YYYYMMDD").format("DD-MM-YYYY");
+                        },
+                        confirmar: function (index) {
+                            if (!this.pagos[index].confirmed) {
+                                this.pagos[index].confirmed = true;
+                                this.pagos[index].fechaConfirmacion = moment().format("YYYYMMDD")
+                            }
+                            else {
+                                this.mensaje = "Ya se confirmó este pago";
+                                $("#mensaje").modal("show");
+                            }
+                        },
+                        eliminar: function (index) {
+                            if (this.pagos[index].confirmed) {
+                                this.mensaje = "No se puede eliminar porque ya ha sido confirmado";
+                                $("#mensaje").modal("show");
+                            }
+                            else {
+                                this.pagos.splice(index, 1);
+                            }
+                        },
+                        crear: function () {
+                            localStorage.setItem("pagos", JSON.stringify(this.pagos));
+                            window.location.href = "@(ViewBag.domain+"Pagos/Crear")";
+                        },
+                        verDetalle: function (index) {
+                            this.detalle = this.pagos[index];
+                            $("#detalle").modal("show");
+                        },
+                        doit: function (pago, type, fn, dl) {
+                            var elt = document.getElementById('data');
+                            var wb = XLSX.utils.table_to_book(elt, { sheet: "Sheet JS" });
+                            return dl ?
+                                XLSX.write(wb, { bookType: type, bookSST: true, type: 'base64' }) :
+                                XLSX.writeFile(wb, fn || ('pago' + pago.pagoID + '.' + (type || 'xlsx')));
+                        }
+                    },
+                    computed: {
+                    },
+                    async mounted() {
+
+                        if (localStorage.getItem("pagos") === null)
+                            this.pagos = [
+                                {
+                                    pagoID: 1145,
+                                    fechaCreacion: "20191021",
+                                    fechaModificacion: "20200101",
+                                    fechaConfirmacion: "",
+                                    monto: "112557.25",
+                                    cuotas: [],
+                                    confirmed: false
+                                },
+                                {
+                                    recompraID: 8752,
+                                    fechaCreacion: "20200120",
+                                    fechaModificacion: "20200120",
+                                    fechaConfirmacion: "",
+                                    monto: "88482.25",
+                                    cuotas: [],
+                                    confirmed: false
+                                }
+                            ]
+                        else
+                            this.pagos = JSON.parse(localStorage.getItem("pagos"));
+                    }
+                });
+
+                </script>
+
+        }

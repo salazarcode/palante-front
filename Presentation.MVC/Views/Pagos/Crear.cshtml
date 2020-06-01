@@ -1,0 +1,623 @@
+﻿@{
+    ViewData["Title"] = "Crear Pago";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+    <div id="app">
+        <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+
+        <div class="container">
+            <div class="row" style="margin-bottom:15px">
+                <div class="col-md-4">
+                    <button class="btn btn-warning" @@click="CubrirDeficit">Cubrir Deficit</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-10">
+                    <table class="table table-hover table-bordered table-sm" style="font-size:10pt">
+                        <thead>
+                            <tr>
+                                <th style="width:30px">
+                                    <input type="checkbox"
+                                           class="form-control"
+                                           @@click="seleccionarTodo"
+                                           :checked="seleccionadoTodo" />
+                                </th>
+                                <th>CreditoID</th>
+                                <th>Cuotas Totales</th>
+                                <th>Nro. de Cuota</th>
+                                <th>Monto</th>
+                                <th>Disponible Usuario</th>
+                                <th>Fecha Vencimiento</th>
+                                <th>Cuenta Por Cobrar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(c, index) in cuotasFiltradas"
+                                @@click="seleccionar($event,index)"
+                                :class="{'table-primary':c.selected}"
+                                >
+                                <td>
+                                    <input type="checkbox" class="form-control" id="seleccionarTodos" :checked="c.selected" />
+                                </td>
+                                <td>
+                                    <a href="#" @@click="DetalleCredito(c.nCodCred)">{{c.nCodCred}}</a>
+                                </td>
+                                <td>{{c.nNroCuotas}}</td>
+                                <td>{{c.nNroCuota}}</td>
+                                <td>{{c.monto.toFixed(2)}}</td>
+                                <td>{{c.disponible}}</td>
+                                <td>{{GetDate(c.dFecVcto)}}</td>
+                                <td style="width:150px">
+                                    <input type="number"
+                                           :disabled="c.disponible >= c.monto"
+                                           class="form-control"
+                                           v-model="c.cuentaPorCobrar" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-2">
+                    <div class="row" style="margin-top:20px">
+                        <div class="col-md-12">
+                            <label>Fondeador: </label>
+                            <img 
+                                 src="~/img/loader.gif" 
+                                 v-if="loaderFondeador" 
+                                 height="40" 
+                                 width="40" 
+                                 style="margin:20px" 
+                                 alt="Loader image" />
+                            <div class="list-group">
+                                <a href="#"
+                                   v-for="(fondeador, index) in fondeadores"
+                                   @@click="f = fondeador.fondeadorID;filter()"
+                                   style="padding:5px !important"
+                                   :class="{'list-group-item':true, 'list-group-item-action':true, 'active':f == fondeador.fondeadorID}">
+                                    {{fondeador.nombre}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:20px">
+                        <div class="col-md-12">
+                            <label>Producto:</label>
+                            <img 
+                                 src="~/img/loader.gif" 
+                                 v-if="loaderProducto" 
+                                 height="40" 
+                                 width="40" 
+                                 style="margin:20px" 
+                                 alt="Loader image" />
+                            <div class="list-group">
+                                <a href="#"
+                                   v-for="(producto, index) in productos"
+                                   @@click="p = producto.nValor;filter()"
+                                   style="padding:5px !important"
+                                   :class="{'list-group-item':true, 'list-group-item-action':true, 'active': p == producto.nValor}">
+                                    {{producto.cNomCod}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:20px">
+                        <div class="col-md-12">
+                            <label for="total">Total</label>
+                            <input type="text" class="form-control" name="total" disabled v-model="total" />
+                            <br />
+                            <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#confirmarGuardar">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+
+            <div class="modal fade" id="confirmarGuardar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Confirmas que deseas guardar del pago de total <b>{{total}}</b>, integrado por las cuotas: </p>
+                            <ul>
+                                <li v-for="c in cuotasFiltradas.filter(x=>x.selected)">
+                                    <b>ID:</b>
+                                    {{c.nCodCred}} -
+                                    <b>Cuota Nro.:</b>
+                                    {{c.nNroCuota}} -
+                                    <b>Monto:</b>
+                                    {{c.monto.toFixed(2)}}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Mensaje</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            {{mensaje}}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalDetalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-hover table-bordered table-sm">
+                                <tr>
+                                    <td>NroCuota</td>
+                                    <td>Monto</td>
+                                    <td>Vencimiento</td>
+                                </tr>
+                                <tr v-for="cuota in creditoDetallado.cuotas" :class="{'table-primary': vigente(cuota.vencimiento)}">
+                                    <td>{{cuota.cuota}}</td>
+                                    <td>{{cuota.monto}}</td>
+                                    <td>{{formatDate(cuota.vencimiento)}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@section Scripts{
+
+    <script>
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                cuotas: [],
+                loaderFondeador: false,
+                loaderProducto:false,
+                cuotasFiltradas: [],
+                productos: [],
+                fondeadores: [],
+                api: "",
+                pagos: [],
+                f: 0,
+                mensaje: "",
+                p: 0,
+                total: 0,
+                mensajeFondeadorProducto: "Debes seleccionar Fondeador y Producto antes de seleccionar",
+                pago: {
+                    pagoID: "",
+                    fechaCreacion: "",
+                    fechaModificacion: "",
+                    fechaConfirmacion: "",
+                    monto: "",
+                    cuotas: [],
+                    confirmed: false
+                },
+                detalle: "",
+                seleccionadoTodo: "",
+                creditoDetallado: ""
+            },
+            methods: {
+                filter: function () {
+                    if (this.f != 0 && this.p != 0) {
+                        this.cuotasFiltradas = [];
+                        this.cuotas.filter(x => x.producto == vm.p && x.fondeador == vm.f)
+                            .forEach(e => vm.cuotasFiltradas.push(e));
+                    }
+                },
+                DetalleCredito: function (credito) {
+                    //Busco detalle del crédito
+                    this.creditoDetallado = {
+                        nCodCred: credito,
+                        cuotas: [
+                            {
+                                cuota: 1,
+                                monto: 123.21,
+                                vencimiento: new Date()
+                            },
+                            {
+                                cuota: 2,
+                                monto: 123.21,
+                                vencimiento: new Date(2020, 5, 27)
+                            },
+                            {
+                                cuota: 3,
+                                monto: 123.21,
+                                vencimiento: new Date(2020, 6, 27)
+                            }
+                        ]
+                    };
+                    $("#modalDetalle").modal("show");
+                },
+                CubrirDeficit: function () {
+                    if (this.f == 0 || this.p == 0) {
+                        this.mensaje = this.mensajeFondeadorProducto;
+                        $("#modalMensaje").modal("show");
+                        return;
+                    }
+                    this.cuotasFiltradas.filter(x => x.disponible < x.monto && x.selected == true).forEach(x => {
+                        if (x.disponible < x.monto)
+                            x.cuentaPorCobrar = x.monto - x.disponible;
+                    });
+                    this.sumatoria();
+                },
+                seleccionarTodo: function () {
+                    if (this.f == 0 || this.p == 0) {
+                        this.mensaje = this.mensajeFondeadorProducto;
+                        $("#modalMensaje").modal("show");
+                        return;
+                    }
+                    this.seleccionadoTodo = !this.seleccionadoTodo;
+                    this.cuotasFiltradas.forEach(x => {
+                        x.selected = vm.seleccionadoTodo;
+                    });
+                    this.sumatoria();
+                },
+                seleccionar: function (event, index) {
+                    if (this.f == 0 || this.p == 0) {
+                        this.mensaje = this.mensajeFondeadorProducto;
+                        $("#modalMensaje").modal("show");
+                        return;
+                    }
+                    if (event.target.tagName != 'A') {
+                        this.cuotasFiltradas[index].selected = !this.cuotasFiltradas[index].selected;
+                        this.sumatoria();
+                    }
+                },
+                GetDate: function (strDate) {
+                    return moment(strDate).format("DD-MM-YYYY");
+                },
+                sumatoria: function () {
+                    let res = 0;
+                    this.cuotasFiltradas.filter(x => x.selected).forEach(x => {
+                        res += x.monto;
+                    });
+                    this.total = res.toFixed(2);
+                },
+                vigente: function (fecha) {
+                    return fecha.getMonth() == (new Date()).getMonth();
+                },
+                formatDate: function (fecha) {
+                    return moment(fecha).format("DD/MM/YYYY");
+                },
+                guardar: function () {
+                    this.pago.pagoID = Math.floor(Math.random() * 9999) + 1000;
+                    this.cuotasFiltradas.filter(x => x.selected).forEach(ele => vm.pago.cuotas.push(ele));
+                    this.pago.fechaCreacion = moment().format("YYYYMMDD");
+                    this.pago.fechaModificacion = moment().format("YYYYMMDD");
+                    this.pago.fechaConfirmacion = "";
+                    this.pago.monto = this.suma;
+                    this.pago.confirmed = false;
+
+                    this.pagos.push(this.pago);
+
+                    window.localStorage.setItem("pagos", JSON.stringify(this.pagos));
+                    window.location.href = "@(ViewBag.domain+"Pagos")"
+                },
+                random: function (min, max) {
+                    return Math.floor(Math.random() * max) + min;
+                }
+            },
+            computed: {
+                suma: function () {
+                    let res = 0;
+                    this.cuotasFiltradas.filter(x => x.selected).forEach(x => {
+                        res += x.monto;
+                    });
+                    return res;
+                }
+            },
+            async mounted() {
+                this.api = $("#endpoint").val();
+
+                this.cuotas = [
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 652.22,
+                        disponible: 652.22,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 200.84,
+                        disponible: 200.84,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto:1
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 300.32,
+                        disponible: 300.32,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 1
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 1
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 1
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 100.15,
+                        disponible: 100.15,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 10
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 2,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 652.22,
+                        disponible: 652.22,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        fondeador: 1,
+                        producto: 10
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 10
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 200.84,
+                        disponible: 200.84,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 300.32,
+                        disponible: 300.32,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 10
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 1,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 2,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: 100.15,
+                        disponible: 100.15,
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 2,
+                        producto: 2
+                    },
+                    {
+                        nCodCred: this.random(1000, 9999),
+                        nNroCuota: this.random(1, 60),
+                        nNroCuotas: this.random(1, 60),
+                        monto: this.random(200, 500),
+                        disponible: this.random(0, 500).toFixed(2),
+                        dFecVcto: new Date(),
+                        cuentaPorCobrar: 0,
+                        vencida: false,
+                        corriente: false,
+                        futura: false,
+                        fondeador: 2,
+                        producto: 2
+                    }
+                ]
+
+                this.cuotasFiltradas = this.cuotas;
+
+                this.cuotas.forEach(x => {
+                    x.selected = false;
+                });
+
+                this.pagos = JSON.parse(localStorage.getItem("pagos"));
+
+                this.loaderFondeador = true;
+                fetch(this.api + "Fondeador/All")
+                    .then(x => x.json())
+                    .then(res => {
+                    vm.fondeadores = res;
+                    vm.loaderFondeador = false;
+                });
+
+                this.loaderProducto = true;
+                fetch(this.api + "Producto/All")
+                    .then(x => x.json())
+                    .then(res => {
+                    vm.productos = res;
+                    vm.loaderProducto = false;
+                });
+            }
+        });
+
+    </script>
+
+}

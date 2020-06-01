@@ -11,21 +11,26 @@ namespace Presentation.MVC.Controllers
     {
         private readonly IConfiguration _conf;
         private readonly string apiEndpoint;
+        private readonly string domain;
         public FondeadoresController(IConfiguration conf)
         {
             _conf = conf;
             apiEndpoint = _conf.GetSection("apiendpoint").Value;
+            apiEndpoint = _conf.GetSection("domain").Value;
         }
 
-        public IActionResult Nuevo()
+        public IActionResult Crear(int id = -1)
         {
             ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
+            ViewBag.editar = id;
             return View();
         }
 
-        public IActionResult Todos()
+        public IActionResult Index()
         {
             ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
             return View();
         }
     }

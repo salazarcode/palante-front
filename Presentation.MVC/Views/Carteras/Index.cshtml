@@ -1,0 +1,279 @@
+﻿
+@{
+    ViewData["Title"] = "Carteras";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+
+<div id="app">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="productos">Producto: </label>
+                <select id="productos" class="form-control" v-model="producto" @@change="changeProducto">
+                    <option :value="producto.nValor" v-for="producto in productos">{{producto.cNomCod}}</option>
+                </select>
+                <div class="col-md-1">
+                    <br />
+                    <img v-if="generalLoader" src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-md-12">
+                <h3 v-if="carteras.length == 0">Cargando datos...</h3>
+
+                <table class="table table-sm table-hover table-bordered table-striped"
+                       style="font-size:10pt">
+                    <thead>
+                        <tr>
+                            <th>CarteraID</th>
+                            <th>Creada</th>
+                            <th>Producto</th>
+                            <th>Modificada</th>
+                            <th>Desembolso</th>
+
+                            <th>Precio</th>
+                            <th colspan="4">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="main">
+                        <tr v-for="cartera in carteras"
+                            :class="cartera.fechaDesembolso != '0001-01-01T00:00:00' ? 'table-success' : ''"
+                            :data-credito="cartera.carteraID">
+                            <td>{{cartera.carteraID}}</td>
+                            <td>{{fecha(cartera.creado)}}</td>
+                            <td>{{cartera.producto.cNomCod}}</td>
+                            <td>{{fecha(cartera.modificado)}}</td>
+                            <td>{{estaCerrada(cartera.fechaDesembolso) ? fecha2(cartera.fechaDesembolso) : 'Aún no definido' }}</td>
+
+                            <td>{{cartera.precio}}</td>
+                            <td><a href="#" @@click="eliminar(cartera.carteraID, cartera.productoID)">Eliminar</a></td>
+                            <td><a href="#" @@click="editarCartera(cartera)">Editar</a></td>
+                            <td><a href="#" @@click="obtenerArchivos(cartera.carteraID, cartera.productoID)">Archivos</a></td>
+                            <td><a href="#" data-toggle="modal" data-target="#cerrarModal" @@click="carteraCerrar = cartera">Cerrar</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Búsqueda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h3 v-if="carteras.length == 0">Cargando datos...</h3>
+                <div class="card card-outline card-primary" v-for="cartera in resBusqueda">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>ID:</b> {{cartera.carteraID}} - <b>Fondeador:</b> {{cartera.fondeador.nombre}}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><b>Fecha creación:</b>  {{fecha(cartera.creado)}}</p>
+                        <p class="card-text"><b>Última modificación:</b> {{fecha(cartera.modificado)}}</p>
+                        <p class="card-text"><b>Créditos:</b> {{cartera.creditos.length != 1 ? cartera.creditos.length : 0}}</p>
+                        <p class="card-text"><b>Capital:</b> {{cartera.precio}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="mensajeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Alerta!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{mensaje}}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Continuar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="cerrarModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Cerrar cartera</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="FechaCierre">Fecha de desembolso</label>
+                <br />
+                <input type="date" class="form-class" name="cierre" id="cierre" value="" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal"  @@click="cerrar(cartera)">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+
+    <script>
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                carteras: [],
+                api: "@ViewBag.endpoint",
+                busqueda: "",
+                resBusqueda: [],
+                seleccionados: [],
+                carteraSel: "",
+                producto: 2,
+                productos: [],
+                generalLoader: false,
+                mensaje: "",
+                carteraCerrar: "",
+                carteraAux: ""
+            },
+            methods: {
+                editarCartera: function (cartera) {
+                    let ruta = '@(ViewBag.domain+"Carteras/Crear")' + '?carteraID=' + cartera.carteraID + '&productoID=' + cartera.producto.nValor;
+                    location.href = ruta;
+                },
+                formatMoney: function (num) {
+                    return num.toFixed(2);
+                },
+                remove: async function (credito) {
+                    var formData = new FormData();
+                    formData.append('CarteraID', vm.carteraSel);
+                    formData.append('ProductoID', vm.carteras.find(x => x.carteraID == vm.carteraSel).productoID);
+                    formData.append('CreditoID', credito);
+
+                    let alpha = await fetch(this.api + "Carteras/Remove", {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    let res = this.carteras.find(x => x.carteraID == vm.carteraSel).creditos.findIndex(i => i.nCodCred == credito);
+                    this.carteras.find(x => x.carteraID == vm.carteraSel).creditos.splice(res, 1);
+                    this.seleccionados.splice(res, 1);
+
+                    this.mensaje = "Se quitó con éxito";
+                    $("mensajeModal").modal("show");
+                },
+                fecha: function (date) {
+                    return moment(date).format("DD/MM/YYYY, h:mm:ss a")
+                },
+                fecha2: function (date) {
+                    return moment(date).format("DD/MM/YYYY")
+                },
+                sumatoria: function (prestamos) {
+                    let sum = 0;
+                    for (var i = 0; i < prestamos.length; i++)
+                        sum = parseFloat(sum) + parseFloat(prestamos[i].precio);
+                    return this.formatMoney(sum);
+                },
+                buscar: function () {
+                    this.modalBusqueda.modal("show");
+                    var res = this.carteras.find(x => x.carteraID == vm.busqueda);
+                    this.resBusqueda.push(res);
+                },
+                cerrar: async function () {
+                    if (this.estaCerrada(this.carteraCerrar.fechaDesembolso)) {
+                        this.mensaje = "Cartera cerrada, no se puede cerrar de nuevo"
+                        $("#mensajeModal").modal("show");
+                        return;
+                    }
+                    var formData = new FormData();
+                    formData.append('CarteraID', this.carteraCerrar.carteraID);
+                    formData.append('ProductoID', this.carteraCerrar.productoID);
+                    formData.append('FechaCierre', $("#cierre").val());
+
+                    let res = await fetch(this.api + "Carteras/Cerrar", {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json());
+
+                    this.mensaje = "Cerrado con éxito"
+                    $("#mensajeModal").modal("show");
+                    window.location.href = "@(ViewBag.domain+"Carteras")";
+                },
+                eliminar: async function (carteraID, productoID) {
+                    let c = this.carteras.find(x => x.carteraID == carteraID);
+                    if (this.estaCerrada(c.fechaDesembolso)) {
+                        alert("Cartera cerrada, no se puede eliminar");
+                        return;
+                    }
+                    let res = await fetch(this.api + "Carteras/Eliminar?CarteraID=" + carteraID + "&ProductoID=" + productoID)
+                        .then(response => response.json());
+                    alert("Eliminado con éxito");
+                    window.location.href = "@(ViewBag.domain+"Carteras")";
+                },
+                estaCerrada: function (val) {
+                    return val != "0001-01-01T00:00:00"
+                },
+                obtenerArchivos: async function (carteraID, productoID) {
+                    await fetch(this.api + "Reportes/GetZip?CarteraID=" + carteraID + "&ProductoID=" + productoID)
+                        .then((transfer) => {
+                            return transfer.blob();
+                        }).then((bytes) => {
+                            let elm = document.createElement('a');
+                            elm.href = URL.createObjectURL(bytes);
+                            elm.setAttribute('download', "cartera" + carteraID + ".zip");
+                            elm.click()
+                        }).catch((error) => {
+                            console.log(error);
+                        })
+                },
+                mensajeCarteraCerrada: function () {
+                    alert("Cartera cerrada");
+                },
+                changeProducto: async function () {
+                    this.generalLoader = true;
+                    this.carteras = await fetch(this.api + "Carteras/All?ProductoID=" + this.producto + "&EsRepro=0").then(x => x.json())
+                    this.generalLoader = false;
+                }
+            },
+            computed: {
+            },
+            async mounted() {
+                this.modalBusqueda = $('#exampleModal');
+
+                this.modalBusqueda.on('hidden.bs.modal', function (e) {
+                    vm.busqueda = "";
+                    vm.resBusqueda = [];
+                });
+                this.generalLoader = true;
+                this.productos = await fetch(this.api + "Producto/All").then(x => x.json())
+                this.generalLoader = false;
+
+                this.generalLoader = true;
+                this.carteras = await fetch(this.api + "Carteras/All?ProductoID=" + this.producto + "&EsRepro=0").then(x => x.json())
+                this.generalLoader = false;
+            }
+        });
+
+    </script>
+
+}

@@ -1,37 +1,102 @@
 ﻿@{
     ViewData["Title"] = "Menú iniciador";
+    Layout = null;
 }
-
-
-<h3>@ViewBag.dir</h3>
-<div class="container">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                    <h5 class="card-title">Fondeadoras</h5>
-                    <a href="/Fondeadores/Todos" class="card-link">Ver</a>
-                    <a href="/Fondeadores/Nuevo" class="card-link">Crear</a>
-                </div>
-            </div>
+    <html !DOCTYPE>
+    <head>
+        <title>Login</title>
+        <style>
+            body {
+                background-color:#E6EAED;
+                display:flex;
+                align-items: center;
+                justify-content:center;
+            }
+            #app {                
+                position: relative;
+                height: 200px;
+                width: 300px;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                background-color: white;
+                border: solid 1px #C4C5C7;
+                padding: 20px;
+                border-radius: 3px;
+            }
+            #enter{ 
+                position:absolute;
+                bottom:10px;
+                width:90%;
+                background-color:#F41C34;
+                font-size: 8pt;
+                color:white;
+                border: none;
+                height: 30px;
+                cursor: pointer;
+            }
+            #logo{
+                position:relative;
+                height: auto;
+                width:70%;
+                margin-bottom:20px;
+            }
+            .inputText {
+                width:100%;
+                height:30px;
+                margin: 5px 0px 5px 0px;
+                border: solid 1px #C4C5C7;
+                padding:5px;
+                font-size:8pt;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+            <img id="logo" src="~/img/Logo.png" alt="Alternate Text" />
+            <input type="text" name="nombre" placeholder="Usuario" id="nombre" class="inputText" value="" v-model="Nombre" />
+            <input type="password" name="clave" placeholder="Contraseña" id="clave" class="inputText" value="" v-model="Clave" />
+            <button id="enter" @@click="check">Ingresar</button>
         </div>
-    </div>
-</div>
-<br />
-<div class="container">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                    <h5 class="card-title">Carteras</h5>
-                    <a href="/Carteras/Todas" class="card-link">Ver</a>
-                    <a href="/Carteras/Nueva" class="card-link">Crear</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script>
+            var vm = new Vue({
+                el: '#app',
+                data: {
+                    Nombre: "",
+                    Clave: "",
+                },
+                methods: {
+                    check: async function () {
+                        var formData = new FormData();
+                        formData.append('nombre', this.Nombre);
+                        formData.append('clave', this.Clave);
+
+                        let res = await fetch(this.api + "Usuarios/Login", {
+                            method: 'POST',
+                            body: formData
+                        }).
+                            then(x => x.json());
+
+                        if (res.codigo != -1) {
+                            window.localStorage.setItem("usuario", JSON.stringify(res.data));
+                            window.location.href = "@(ViewBag.domain+"Home/Dashboard")";
+                        }
+                        else
+                            alert("Usuario o contraseña incorrecto/a");
+                    }
+                },
+                async mounted() {
+                    this.api = $("#endpoint").val();
+                }
+            });
+
+        </script>
+    </body>
+    </html>
 
 
 

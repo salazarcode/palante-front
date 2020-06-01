@@ -1,0 +1,118 @@
+﻿
+@{
+    ViewData["Title"] = "Nuevo Fondeador";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div id="app">
+    <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-outline card-primary" style="width: 18rem;">
+                    <div class="card-body">
+                        <label for="Nombre">Nombre:</label>
+                        <input type="text" class="form-control" name="Nombre" id="Nombre" value="" v-model="Nombre" />
+                        <br />
+                        <label for="Color">Color:</label>
+                        <input type="text" class="form-control" name="Color" id="Color" value="" v-model="Color" />
+                        <br />
+                        <label for="Evaluador">Evaluador:</label>
+                        <input type="text" class="form-control" name="Evaluador" id="Evaluador" value="" v-model="Evaluador" />
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-primary btn-small" @@click="GuardarFondeador">Guardar</button>
+                        <a href="@(ViewBag.domain+"Fondeadores")" class="btn btn-danger btn-small">
+                            Cancelar
+                        </a>
+                    </div>
+                </div>
+
+                <br />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts{
+
+    <script>
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                FondeadorID: "",
+                Nombre: "",
+                Color: "",
+                Evaluador: ""
+            },
+            methods: {
+                GuardarFondeador: async function () {
+                    let fondeador = {
+                        FondeadorID: this.FondeadorID,
+                        Nombre: this.Nombre,
+                        Color: this.Color,
+                        Evaluador: this.Evaluador
+                    };
+
+                    var formData = new FormData();
+                    if (this.FondeadorID != "")
+                        formData.append('FondeadorID', fondeador.FondeadorID);
+                    formData.append('Nombre', fondeador.Nombre);
+                    formData.append('Nombre', fondeador.Nombre);
+                    formData.append('Color', fondeador.Color);
+                    formData.append('Evaluador', fondeador.Evaluador);
+
+                    let res = await fetch(this.api + "Fondeador/Save", {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json());
+
+                    if (res != 0)
+                        alert("Se guardó exitosamente el nuevo fondeador");
+
+                    window.location.href = "@(ViewBag.domain+"Fondeadores")";
+                },
+                Seleccionar: function(evento, credito) {
+                    $(evento.target).parent().toggleClass("table-primary");
+
+                    let index = this.GetIndex(this.seleccionados, "nCodCred", credito.nCodCred);
+
+                    if (index == -1)
+                        this.seleccionados.push(credito);
+                    else
+                        this.seleccionados.splice(index, 1);
+                },
+                formatMoney: function(num) {
+                            return(num.toFixed(2) // always two decimal digits
+                                .replace('.', ',') // replace decimal point character with ,
+                                .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
+                  )
+                }
+            },
+            computed: {
+                sumatoria: function () {
+                    let sum = 0;
+                    for (var i = 0; i < this.seleccionados.length; i++)
+                        sum = parseFloat(sum) + parseFloat(this.seleccionados[i].nPrestamo);
+                    return this.formatMoney(sum);
+                }
+            },
+            async mounted() {
+                this.api = $("#endpoint").val();
+                this.creditos = await fetch(this.api + "Creditos/All").then(x => x.json());
+                this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
+                if (@ViewBag.editar != -1) {
+                    var fondeador = await fetch(this.api + "Fondeador/Find?FondeadorID=" +@ViewBag.editar).then(x => x.json());
+                    this.FondeadorID = fondeador.fondeadorID;
+                    this.Nombre = fondeador.nombre;
+                    this.Color = fondeador.color;
+                    this.Evaluador = fondeador.evaluador;
+                }
+            }
+        });
+
+    </script>
+
+}
