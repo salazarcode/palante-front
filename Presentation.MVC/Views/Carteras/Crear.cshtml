@@ -539,6 +539,11 @@
                     formData.append('Tipo', this.tipoBusqueda);
                     formData.append('Query', this.busquedaItems.join(","));
 
+                    if (this.cartera == "")
+                        formData.append('Fecha', new Date());
+                    else
+                        formData.append('Fecha', this.cartera.creado);
+
                     let res = await fetch(this.api + "Creditos/Search", {
                         method: 'POST',
                         body: formData
@@ -547,6 +552,7 @@
 
 
                     if (res.length == 0) {
+                        this.pantallaBusqueda = 2;
                         this.busquedaSinResultado = true;
                     } else {
                         this.busquedaSinResultado = false;
@@ -559,6 +565,7 @@
                         var formData = new FormData();
                         formData.append('FondeadorID', this.fondeador);
                         formData.append('creditos', res.map(x => x.nCodCred).join(","));
+
 
                         let cumplimiento = await fetch(this.api + "Creditos/Cumplimiento", {
                             method: 'POST',
