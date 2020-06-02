@@ -156,7 +156,6 @@
                             <img src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
                         </div>
                         <div id="resultado" v-if="pantallaBusqueda == 2">
-                            <button class="btn btn-secondary" @@click="pantallaBusqueda = 0">Atras</button>
                             <br />
                             <div v-if="busquedaSinResultado && !busquedaLoader" class="alert alert-warning" role="alert">
                                 No se encontraron resultados
@@ -204,7 +203,8 @@
 
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-sm btn-success" @@click="buscar">Buscar</button>
+                        <button class="btn btn-secondary" @@click="pantallaBusqueda = 0" v-if="pantallaBusqueda==2">Atras</button>
+                        <button class="btn btn-sm btn-success" @@click="buscar" v-if="pantallaBusqueda==0">Buscar</button>
                     </div>
                 </div>
             </div>
