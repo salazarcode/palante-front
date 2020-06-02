@@ -504,6 +504,10 @@
                         this.seleccionados.splice(index, 1);
                         $("#" + credito.nCodCred).removeClass("table-primary");
                     }
+
+                    this.parametros.evento = "";
+                    this.parametros.credito = "";
+                    this.parametros.busqueda = "";
                 },
                 Seleccionar: function (evento, credito, busqueda = 0) {
                     if (this.fondeador == 0) {
@@ -511,7 +515,7 @@
                         $("#mensajeModal").modal("show");
                         return;
                     }
-                    if (!vm.cumplimiento.map(x => x.nCodCred).includes(credito.nCodCred)) {
+                    if (!vm.cumplimiento.map(x => x.nCodCred).includes(credito.nCodCred) && !vm.seleccionados.map(x => x.nCodCred).includes(credito.nCodCred)) {
                         this.parametros.evento = evento;
                         this.parametros.credito = credito;
                         this.parametros.busqueda = busqueda;
@@ -654,6 +658,7 @@
 
                 this.modalBusqueda.on('hidden.bs.modal', function (e) {
                     vm.resBusqueda = [];
+                    vm.pantallaBusqueda = 0;
                 });
             }
         });
