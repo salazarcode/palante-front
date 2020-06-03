@@ -61,8 +61,8 @@
                                         :id="credito.nCodCred">
                                         <td>{{credito.nCodCred}}</td>
                                         <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{credito.precio}}</td>
+                                        <td>{{credito.nPrestamo.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
+                                        <td>{{credito.precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
                                         <td>{{credito.nNroCuotas}}</td>
                                         <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
@@ -85,13 +85,19 @@
                     <div class="row">
                         <div class="col">
                             <label for="capital">Capital:</label>
-                            <input type="text" id="capital" class="form-control" :value="sumatoria" disabled />
+                            <input type="text" id="capital" class="form-control" :value="sumatoria.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')" disabled />
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
                             <label for="cantidad">Cantidad:</label>
                             <input type="number" id="cantidad" class="form-control" :value="seleccionados.length" disabled />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="creado">Creado:</label>
+                            <input type="date" class="form-control" name="date" v-model="creado" value="" />
                         </div>
                     </div>
                     <br />
@@ -326,6 +332,7 @@
                 repro: false,
                 page: 1,
                 pagesize: 5,
+                creado:"",
                 generalLoader: false,
                 pantallaBusqueda: 0,
                 parametros: {
@@ -447,14 +454,18 @@
                         CarteraID: this.carteraID,
                         FondeadorID: this.fondeador,
                         Creditos: this.seleccionados.map(x => x.nCodCred).join(','),
-                        ProductoID: this.producto
+                        ProductoID: this.producto,
+                        Creado: this.creado
                     };
+
+                    console.log(cartera);
 
                     var formData = new FormData();
                     formData.append('CarteraID', cartera.CarteraID);
                     formData.append('FondeadorID', cartera.FondeadorID);
                     formData.append('Creditos', cartera.Creditos);
                     formData.append('ProductoID', cartera.ProductoID);
+                    formData.append('Creado', cartera.Creado);
 
                     let res = await fetch(this.api + "Carteras/Save", {
                         method: 'POST',
@@ -539,10 +550,7 @@
                     formData.append('Tipo', this.tipoBusqueda);
                     formData.append('Query', this.busquedaItems.join(","));
 
-                    if (this.cartera == "")
-                        formData.append('Fecha', new Date());
-                    else
-                        formData.append('Fecha', this.cartera.creado);
+                    formData.append('Fecha', this.creado);
 
                     let res = await fetch(this.api + "Creditos/Search", {
                         method: 'POST',
@@ -649,6 +657,7 @@
 
                     this.fondeador = this.cartera.fondeador.fondeadorID;
                     this.producto = this.cartera.productoID;
+                    this.creado = new Date(this.cartera.creado).toISOString().slice(0, 10);
                     this.seleccionados = this.cartera.creditos;
 
                     this.seleccionados = this.cartera.creditos;
@@ -657,6 +666,7 @@
                     $("#producto").prop("disabled", true);
                 }
                 else {
+                    this.creado = new Date().toISOString().slice(0, 10);
                     this.carteraID = await this.GuardarNeto();
                 }
                 this.generalLoader = false;
