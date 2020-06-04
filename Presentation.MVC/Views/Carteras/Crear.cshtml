@@ -46,8 +46,8 @@
                             <table v-if="seleccionados.length != 0" id="creds" class="table table-sm table-bordered table-hover" style="font-size:10pt">
                                 <thead>
                                     <tr>
-                                        <th>Nro.</th>
-                                        <th>Moneda</th>
+                                        <th>COF</th>
+                                        <th>ORION</th>
                                         <th>Capital</th>
                                         <th>Precio</th>
                                         <th>Cuotas</th>
@@ -60,9 +60,9 @@
                                     <tr v-for="credito in seleccionados"
                                         :id="credito.nCodCred">
                                         <td>{{credito.nCodCred}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{credito.nPrestamo.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
-                                        <td>{{credito.precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
+                                        <td>{{credito.ccodcta.trim()}}</td>
+                                        <td>{{Moneda(credito.nMoneda) + ' ' + credito.nPrestamo.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
+                                        <td>{{Moneda(credito.nMoneda) + ' ' + credito.precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
                                         <td>{{credito.nNroCuotas}}</td>
                                         <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
