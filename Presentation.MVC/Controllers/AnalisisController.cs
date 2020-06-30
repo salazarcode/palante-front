@@ -7,24 +7,16 @@ using Microsoft.Extensions.Configuration;
 
 namespace Presentation.MVC.Controllers
 {
-    public class FondeadoresController : Controller
+    public class AnalisisController : Controller
     {
         private readonly IConfiguration _conf;
         private readonly string apiEndpoint;
         private readonly string domain;
-        public FondeadoresController(IConfiguration conf)
+        public AnalisisController(IConfiguration conf)
         {
             _conf = conf;
             apiEndpoint = _conf.GetSection("apiendpoint").Value;
             domain = _conf.GetSection("domain").Value;
-        }
-
-        public IActionResult Crear(int id = -1)
-        {
-            ViewBag.endpoint = apiEndpoint;
-            ViewBag.domain = domain;
-            ViewBag.editar = id;
-            return View();
         }
 
         public IActionResult Index()

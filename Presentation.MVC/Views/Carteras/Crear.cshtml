@@ -125,36 +125,25 @@
                     <div class="modal-body">
                         <div id="parametros" v-if="pantallaBusqueda == 0">
                             <div class="row">
-                                <div class="col-md-3">
-                                    <select class="form-control" v-model="tipoBusqueda">
-                                        <option value="0">Tipo Búsqueda</option>
-                                        <option value="ruc">RUC</option>
-                                        <option value="dni">DNI</option>
-                                        <option value="credito">Credito</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-9">
-                                    <input type="text"
-                                           name="busqueda"
-                                           id="busqueda"
-                                           v-model="busqueda"
-                                           style="width:100%"
-                                           placeholder="Escribe un item y presiona enter"
-                                           @@keyup.enter="agregarItem"
-                                           class="form-control" />
-                                </div>
-                                <div class="col-md-6" style="margin-top:20px;">
-                                    <p>Elementos: <span class="badge badge-light">{{busquedaItems.length != 0 ? busquedaItems.length : 'Agrega items a la búsqueda'}}</span></p>
-
+                                <div class="col-md-6">
+                                    <label for="creado">Fecha corte:</label>
+                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
+                                    <label style="margin-top:15px">Tipo:</label>
                                     <div class="list-group">
                                         <a href="#"
-                                           v-for="(item,index) in busquedaItems"
-                                           @@click="eliminarItem(index)"
-                                            class="list-group-item list-group-item-action"
-                                           >
-                                            {{item}}
-                                        </a>
+                                           :class="{'list-group-item':true, 'list-group-item-action':true, 'active':tipoBusqueda == 'ruc'}"
+                                           @@click="tipoBusqueda = 'ruc'; busquedaItems = []">RUC</a>
+                                        <a href="#"
+                                           :class="{'list-group-item':true, 'list-group-item-action':true, 'active':tipoBusqueda == 'dni'}"
+                                           @@click="tipoBusqueda = 'dni'; busquedaItems = []">DNI</a>
+                                        <a href="#"
+                                           :class="{'list-group-item':true, 'list-group-item-action':true, 'active':tipoBusqueda == 'credito'}"
+                                           @@click="tipoBusqueda = 'credito'; busquedaItems = []">CREDITO</a>
                                     </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="creado">IDs, DNIs o RUCs:</label>
+                                    <textarea class="form-control" id="busqueda" cols="30" rows="10" v-model="busqueda"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -316,7 +305,6 @@
                 cumplimientoNeto: [],
                 api: "",
                 carteraID: 0,
-                busquedaItems: [],
                 busqueda: "",
                 resBusqueda: [],
                 modalBusqueda: "",
@@ -625,6 +613,10 @@
                             return "Vencido";
                         case 4:
                             return "Pagado";
+                        case 6:
+                            return "Desistido";
+                        case 16:
+                            return "Prejudicial";
                     }
                 },
                 Moneda: function (moneda) {
@@ -643,6 +635,9 @@
                         sum = parseFloat(sum) + parseFloat(this.seleccionados[i].precio);
                     return this.formatMoney(sum);
                 },
+                busquedaItems: function () {
+                    return this.busqueda.split("\n").map(x => x.trim());
+                }
             },
             async mounted() {
                 this.api = $("#endpoint").val();

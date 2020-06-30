@@ -44,7 +44,8 @@
                 FondeadorID: "",
                 Nombre: "",
                 Color: "",
-                Evaluador: ""
+                Evaluador: "",
+                Fondeador: ""
             },
             methods: {
                 GuardarFondeador: async function () {
@@ -101,10 +102,9 @@
             },
             async mounted() {
                 this.api = $("#endpoint").val();
-                this.creditos = await fetch(this.api + "Creditos/All").then(x => x.json());
-                this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
+                var res = await fetch(this.api + "Fondeador/All").then(x => x.json());
                 if (@ViewBag.editar != -1) {
-                    var fondeador = await fetch(this.api + "Fondeador/Find?FondeadorID=" +@ViewBag.editar).then(x => x.json());
+                    var fondeador = res.find(x => x.fondeadorID == @ViewBag.editar);
                     this.FondeadorID = fondeador.fondeadorID;
                     this.Nombre = fondeador.nombre;
                     this.Color = fondeador.color;

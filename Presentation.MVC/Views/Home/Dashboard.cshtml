@@ -7,7 +7,7 @@
 <h3>@ViewBag.dir</h3>
 <div class="container" id="app">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-9">
             <div class="row">
                 <div class="col-md-4">
                     <div class="card card-outline card-warning" style="width: 100%;">
@@ -73,9 +73,25 @@
                 </div>
 
             </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card card-outline card-primary" style="width: 100%">
+                        <div class="card-header">
+                            <div class="card-title">
+                                Análisis
+                            </div>
+                        </div>
+                        <div class="card-body">
+                        </div>
+                        <div class="card-footer">
+                            <a href="@(ViewBag.domain+"Analisis")" class="btn btn-primary">Ver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div id="calendar" style="font-size:8pt !important"></div>
         </div>
     </div>

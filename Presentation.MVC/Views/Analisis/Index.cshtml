@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Nueva recompra";
+    ViewData["Title"] = "Análisis";
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
 
@@ -9,23 +9,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-10">
-                    <div class="row" v-if="screen == 'lista'">
-                        <div class="col-md-2" >
-                            <label for="fondeadora">Fondeador:</label>
-                            <select class="form-control" id="fondeador" v-model="fondeador" @@change="">
-                                <option value="0">Seleccionar</option>
-                                <option v-for="fondeador in fondeadores" :value="fondeador.fondeadorID">{{fondeador.nombre}}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="Producto">Producto:</label>
-                            <select class="form-control" id="producto" v-model="producto" @@change="">
-                                <option value="0">Todos</option>
-                                <option v-for="(producto, index) in productos" :value="producto.nValor">{{producto.cNomCod}}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px">
+                    <div class="row">
                         <div class="col-md-12" v-if="screen == 'lista'">
                             <div v-if="seleccionados.length == 0"
                                  style="border:dashed 3px gray; height:300px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
@@ -199,34 +183,16 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="row"  v-if="screen == 'detalle'" >
+                    <div class="row">
                         <div class="col">
                             <label for="total">Total</label>
                             <input type="text" id="capital" class="form-control" :value="sumatoria.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')" disabled />
                         </div>
                     </div>
-                    <div class="row" style="margin-top:10px"  v-if="screen == 'detalle'" >
+                    <div class="row" style="margin-top:10px">
                         <div class="col">
-                            <label for="total">Endeudamiento cliente</label>
-                            <input type="text" id="capital" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px"  v-if="screen == 'detalle'" >
-                        <div class="col">
-                            <label for="total">Por pagar a fondeador:</label>
-                            <input type="text" id="capital" class="form-control" :value="45002.50" disabled />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <button 
-                                    style="margin-top:10px"
-                                    class="btn btn-success btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#confirmarGuardar"
-                                    style="width:100%;margin-bottom:5px">
-                                Guardar
-                            </button>
+                            <label for="total">Deuda Total</label>
+                            <input type="text" id="deuda" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
                         </div>
                     </div>
 
@@ -239,6 +205,25 @@
                     <div class="row" v-if="screen == 'lista'">
                         <div class="col">
                             <button style="margin-top:10px" class="btn btn-sm btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal" style="margin-bottom:10px">Buscar</button>
+                        </div>
+                    </div>
+
+                    <div class="row" v-if="screen == 'lista'">
+                        <div class="col">
+                            <button 
+                                    style="margin-top:10px" 
+                                    class="btn btn-sm btn-primary btn-sm" 
+                                    data-toggle="modal" 
+                                    data-target="#modalReporteEstado" 
+                                    style="margin-bottom:10px">
+                                Reporte por estado
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row" v-if="screen == 'lista'">
+                        <div class="col">
+                            <button v-if="seleccionados.length != 0" style="margin-top:10px" class="btn btn-sm btn-success btn-sm" style="margin-bottom:10px" @@click="ReporteDeuda">Excel</button>
                         </div>
                     </div>
 
@@ -288,10 +273,8 @@
                     <div class="modal-body">
                         <div id="parametros" v-if="pantallaBusqueda == 0">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <label for="creado">Fecha corte:</label>
-                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
-                                    <label style="margin-top:15px">Tipo:</label>
+                                <div class="col-md-3">
+                                    <label>Tipo:</label>
                                     <div class="list-group">
                                         <a href="#"
                                            :class="{'list-group-item':true, 'list-group-item-action':true, 'active':tipoBusqueda == 'ruc'}"
@@ -304,9 +287,35 @@
                                            @@click="tipoBusqueda = 'credito'; busquedaItems = []">CREDITO</a>
                                     </div>
                                 </div>
+                                <div clss="col-md-3">
+                                    <label for="creado">Fecha corte:</label>
+                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
+                                </div>
                                 <div class="col-md-6">
                                     <label for="creado">IDs, DNIs o RUCs:</label>
-                                    <textarea class="form-control" id="busqueda" cols="30" rows="10" v-model="busqueda"></textarea>
+                                    <input type="text"
+                                           name="busqueda"
+                                           id="busqueda"
+                                           v-model="busqueda"
+                                           style="width:100%"
+                                           placeholder="Escribe un item y presiona enter"
+                                           @@keyup.enter="agregarItem"
+                                           class="form-control" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <br />
+                                    <p>Elementos: <span class="badge badge-light">{{busquedaItems.length != 0 ? busquedaItems.length : 'Agrega items a la búsqueda'}}</span></p>
+
+                                    <div class="list-group">
+                                        <a href="#"
+                                           v-for="(item,index) in busquedaItems"
+                                           @@click="eliminarItem(index)"
+                                           class="list-group-item list-group-item-action">
+                                            {{item}}
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -368,6 +377,33 @@
             </div>
         </div>
 
+        <div class="modal fade" id="modalReporteEstado" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Créditos por estado</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <h5>Estados:</h5>
+                        <ol >
+                            <li v-for="e in nestados">
+                                <input type="checkbox" :id="'check'+e.valor" :value="e.valor" v-model="estados"/>
+                                <label :for="'check'+e.valor">{{e.nombre}}</label>
+                            </li>
+                        </ol>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+                        <button class="btn btn-sm btn-success" @@click="BuscarPorEstado">Generar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @section Scripts{
 
             <script>
@@ -377,7 +413,8 @@
                         pantallaBusqueda: 0,
                         busqueda: "",
                         tipoBusqueda: 0,
-                        busquedaSinResultado:false,
+                        busquedaItems: [],
+                        busquedaSinResultado: false,
                         busquedaLoader: false,
                         resBusqueda: [],
                         creado: new Date().toISOString().substring(0, 10),
@@ -404,13 +441,59 @@
                         detalle: "",
                         cronogramaPalanteSeleccionado: 1,
                         cronogramaFondeadorSeleccionado: 1,
-                        productos: [],
-                        fondeadores: [],
-                        producto: 0,
-                        fondeador: 0
+                        estados: [],
+                        nestados: [
+                            { nombre: "Registrados"     ,       valor:1 },
+                            { nombre: "Vigentes"        ,       valor:2 },
+                            { nombre: "Vencidos"        ,       valor:3 },
+                            { nombre: "Pagados"         ,       valor:4 },
+                            { nombre: "Desistidos"      ,       valor:6 },
+                            { nombre: "Prejudiciales"   ,       valor:16},
+                        ]
                     },
                     methods: {
+                        BuscarPorEstado: async function () {
+                            var formData = new FormData();
+                            formData.append('Estados', vm.estados.join(","));
+                            
+                            let res = await fetch(this.api + "Creditos/PorEstado", {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then((transfer) => {
+                                return transfer.blob();
+                            }).then((bytes) => {
+                                let elm = document.createElement('a');
+                                elm.href = URL.createObjectURL(bytes);
+                                elm.setAttribute('download', "CreditosPorEstado.xlsx");
+                                elm.click()
+                            }).catch((error) => {
+                                console.log(error);
+                            });
+                        },
+                        ReporteDeuda: async function () {
+                            var creditos = this.seleccionados.map(x => x.nCodCred).join(",");
+                            console.log(creditos);
 
+                            var formData = new FormData();
+                            formData.append('creditos', creditos);
+                            formData.append('Fecha', (new Date()).toISOString());
+
+                            let res = await fetch(this.api + "Reportes/ReporteDeuda", {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then((transfer) => {
+                                    return transfer.blob();
+                                }).then((bytes) => {
+                                    let elm = document.createElement('a');
+                                    elm.href = URL.createObjectURL(bytes);
+                                    elm.setAttribute('download', "analisis.xlsx");
+                                    elm.click()
+                                }).catch((error) => {
+                                    console.log(error);
+                                })
+                        },
                         agregarItem: function () {
                             let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
                             if (finding == undefined)
@@ -509,7 +592,7 @@
                         },
                         GetDate: function (strDate) {
                             return moment(strDate).format("DD-MM-YYYY");
-                        },                        
+                        },
                         guardar: function () {
                             console.log(this.seleccionados);
                         },
@@ -575,15 +658,9 @@
                                 sum = parseFloat(sum) + parseFloat(this.seleccionados[i].precio);
                             return this.formatMoney(sum);
                         },
-                        busquedaItems: function () {
-                            return this.busqueda.split("\n").map(x => x.trim());
-                        }
                     },
                     async mounted() {
                         this.api = $("#endpoint").val();
-
-                        this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
-                        this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
 
                         var formData = new FormData();
                         formData.append('page', this.page);
@@ -606,6 +683,8 @@
                         this.recompras = JSON.parse(localStorage.getItem("recompras"));
 
                         this.modalBusqueda = $('#exampleModal');
+
+                        this.modalReporteEstado = $('#modalReporteEstado');
 
                         this.modalBusqueda.on('hidden.bs.modal', function (e) {
                             vm.resBusqueda = [];
