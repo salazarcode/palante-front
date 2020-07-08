@@ -10,16 +10,16 @@
             <div class="row">
                 <div class="col-md-10">
                     <div class="row" v-if="screen == 'lista'">
-                        <div class="col-md-2" >
+                        <div class="col-md-2">
                             <label for="fondeadora">Fondeador:</label>
-                            <select class="form-control" id="fondeador" v-model="fondeador" @@change="">
+                            <select class="form-control" id="fondeador" v-model="fondeador" @@change="seleccionados = []">
                                 <option value="0">Seleccionar</option>
                                 <option v-for="fondeador in fondeadores" :value="fondeador.fondeadorID">{{fondeador.nombre}}</option>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <label for="Producto">Producto:</label>
-                            <select class="form-control" id="producto" v-model="producto" @@change="">
+                            <select class="form-control" id="producto" v-model="producto" @@change="seleccionados = []">
                                 <option value="0">Todos</option>
                                 <option v-for="(producto, index) in productos" :value="producto.nValor">{{producto.cNomCod}}</option>
                             </select>
@@ -40,8 +40,8 @@
                                         <th>Capital</th>
                                         <th>Precio</th>
                                         <th>Cuotas</th>
-                                        <th>Vcto.</th>
                                         <th>Producto</th>
+                                        <th>Fondeador</th>
                                         <th>ID</th>
                                         <th>Nombre</th>
                                         <th colspan="2">Opciones</th>
@@ -56,8 +56,8 @@
                                         <td>{{formatMoney(credito.nPrestamo)}}</td>
                                         <td>{{credito.precio}}</td>
                                         <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.producto.cNomCod}}</td>
+                                        <td>{{credito.fondeadorID != 0 ? fondeadores.find(x=>x.fondeadorID = credito.fondeadorID).nombre.toUpperCase() : ""}}</td>
                                         <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
                                         <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
                                         <td>
@@ -199,19 +199,19 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="row"  v-if="screen == 'detalle'" >
+                    <div class="row" v-if="screen == 'lista'">
                         <div class="col">
                             <label for="total">Total</label>
                             <input type="text" id="capital" class="form-control" :value="sumatoria.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')" disabled />
                         </div>
                     </div>
-                    <div class="row" style="margin-top:10px"  v-if="screen == 'detalle'" >
+                    <div class="row" style="margin-top:10px" v-if="screen == 'detalle'">
                         <div class="col">
                             <label for="total">Endeudamiento cliente</label>
                             <input type="text" id="capital" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
                         </div>
                     </div>
-                    <div class="row" style="margin-top:10px"  v-if="screen == 'detalle'" >
+                    <div class="row" style="margin-top:10px" v-if="screen == 'detalle'">
                         <div class="col">
                             <label for="total">Por pagar a fondeador:</label>
                             <input type="text" id="capital" class="form-control" :value="45002.50" disabled />
@@ -219,12 +219,12 @@
                     </div>
                     <div class="row">
                         <div class="col">
-                            <button 
-                                    style="margin-top:10px"
+                            <button style="margin-top:10px;width:100%;margin-bottom:5px"
                                     class="btn btn-success btn-sm"
                                     data-toggle="modal"
                                     data-target="#confirmarGuardar"
-                                    style="width:100%;margin-bottom:5px">
+                                    v-if="screen == 'lista'"
+                                    :disabled="seleccionados.length == 0">
                                 Guardar
                             </button>
                         </div>
@@ -232,13 +232,21 @@
 
                     <div class="row" v-if="screen != 'lista'">
                         <div class="col">
-                            <button style="margin-top:10px" class="btn btn-warning btn-sm" @@click="screen = 'lista'">Atras</button>
+                            <button style="margin-top: 10px; width: 100%; margin-bottom: 5px" class="btn btn-warning btn-sm" @@click="screen = 'lista'">Atras</button>
                         </div>
                     </div>
 
                     <div class="row" v-if="screen == 'lista'">
                         <div class="col">
-                            <button style="margin-top:10px" class="btn btn-sm btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal" style="margin-bottom:10px">Buscar</button>
+                            <button 
+                                    style="margin-top: 10px; width: 100%; margin-bottom: 5px" 
+                                    class="btn btn-sm btn-primary btn-sm" 
+                                    data-toggle="modal" 
+                                    data-target="#exampleModal" 
+                                    :disabled="producto == 0 || fondeador == 0"
+                                    >
+                                Buscar
+                            </button>
                         </div>
                     </div>
 
@@ -261,10 +269,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Confirmas que deseas guardar la recompra de total <b>{{total}}</b>, integrada por los créditos: </p>
-                        <ul>
-                            <li v-for="c in creditosFiltrados.filter(x=>x.selected)"><b>ID:</b> {{c.nCodCred}} - <b>Monto:</b> {{c.nPrestamo.toFixed(2)}}</li>
-                        </ul>
+                        <p>Confirmas que deseas guardar la recompra?</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -321,7 +326,7 @@
                             <table style="margin-top:20px" v-if="!busquedaSinResultado && !busquedaLoader" class="table table-sm table-bordered table-hover" id="tableBusqueda">
                                 <thead>
                                     <tr>
-                                        <th>Nro.</th>
+                                        <th>Sel.</th>
                                         <th>Nro.</th>
                                         <th>Moneda</th>
                                         <th>Capital</th>
@@ -329,19 +334,21 @@
                                         <th>Cuotas</th>
                                         <th>Vcto.</th>
                                         <th>Producto</th>
+                                        <th>Fondeador</th>
                                         <th>ID</th>
                                         <th>Nombre</th>
                                     </tr>
                                 </thead>
                                 <tbody id="main">
                                     <tr v-for="credito in resBusqueda"
-                                        :class="{ 'table-primary': credito.selected }"
-                                        :id="credito.nCodCred"
-                                        @@click="Seleccionar(credito,1)">
+                                        :class="{ 'table-primary': credito.selected, 'table-danger' : credito.fondeadorID != fondeador || credito.codigoProducto != producto }"
+                                        :id="credito.nCodCred">
                                         <td>
                                             <input type="checkbox"
                                                    class="form-control"
-                                                   :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)">
+                                                   @@click="Seleccionar(credito,1)"
+                                                   :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)"
+                                                   :disabled="credito.fondeadorID != fondeador || credito.codigoProducto != producto">
                                         </td>
                                         <td>{{credito.nCodCred}}</td>
                                         <td>{{Moneda(credito.nMoneda)}}</td>
@@ -350,6 +357,7 @@
                                         <td>{{credito.nNroCuotas}}</td>
                                         <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.producto.cNomCod}}</td>
+                                        <td>{{credito.fondeadorID != 0 ? fondeadores.find(x=>x.fondeadorID == credito.fondeadorID).nombre : ''}}</td>
                                         <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
                                         <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
                                     </tr>
@@ -362,7 +370,7 @@
                     <div class="modal-footer">
                         <button class="btn btn-secondary" @@click="pantallaBusqueda = 0" v-if="pantallaBusqueda==2">Atras</button>
                         <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
-                        <button class="btn btn-sm btn-success" @@click="buscar" v-if="pantallaBusqueda==0">Buscar</button>
+                        <button class="btn btn-sm btn-success" @@click="buscar"  v-if="pantallaBusqueda==0">Buscar</button>
                     </div>
                 </div>
             </div>
@@ -370,14 +378,14 @@
 
         @section Scripts{
 
-            <script>
+                <script>
                 var vm = new Vue({
                     el: '#app',
                     data: {
                         pantallaBusqueda: 0,
                         busqueda: "",
                         tipoBusqueda: 0,
-                        busquedaSinResultado:false,
+                        busquedaSinResultado: false,
                         busquedaLoader: false,
                         resBusqueda: [],
                         creado: new Date().toISOString().substring(0, 10),
@@ -404,13 +412,14 @@
                         detalle: "",
                         cronogramaPalanteSeleccionado: 1,
                         cronogramaFondeadorSeleccionado: 1,
+                        modalAlerta: "",
                         productos: [],
                         fondeadores: [],
                         producto: 0,
-                        fondeador: 0
+                        fondeador: 0,
+                        recompraID: @ViewBag.editar
                     },
                     methods: {
-
                         agregarItem: function () {
                             let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
                             if (finding == undefined)
@@ -443,7 +452,6 @@
                                 $("#" + credito.nCodCred).removeClass("table-primary");
                             }
                         },
-
                         buscar: async function () {
                             if (this.tipoBusqueda == 0) {
                                 this.mensaje = "Debes seleccionar un tipo de búsqueda";
@@ -509,9 +517,22 @@
                         },
                         GetDate: function (strDate) {
                             return moment(strDate).format("DD-MM-YYYY");
-                        },                        
-                        guardar: function () {
-                            console.log(this.seleccionados);
+                        },
+                        guardar: async function () {
+
+                            var formData = new FormData();
+                            formData.append('RecompraID', this.recompraID);
+                            formData.append('FondeadorID', this.fondeador);
+                            formData.append('ProductoID', this.producto);
+                            formData.append('Creditos', this.seleccionados.map(x=>x.nCodCred).join(","));
+
+                            var res = await fetch(this.api + "Recompras/Save", {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => response.json());
+
+                            location.href = '@(ViewBag.domain+"Recompras")';
                         },
                         formatMoney: function (num) {
                             return num.toFixed(2)
@@ -585,25 +606,17 @@
                         this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
                         this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
 
-                        var formData = new FormData();
-                        formData.append('page', this.page);
-                        formData.append('pagesize', this.pagesize);
-                        formData.append('producto', this.producto);
-                        if (this.repro == 1)
-                            formData.append('repro', true);
-
-                        this.creditos = await fetch(this.api + "Creditos/All", {
-                            method: 'POST',
-                            body: formData
-                        })
-                            .then(response => response.json());
+                        if (this.recompraID != 0) {
+                            var recompra = await fetch(this.api + "Recompras/Find?RecompraID=" + this.recompraID).then(x => x.json());
+                            this.fondeador = recompra.fondeadorID;
+                            this.producto = recompra.productoID;
+                            this.seleccionados = recompra.creditos;
+                        }
 
                         this.creditosFiltrados = this.creditos;
                         this.creditos.forEach(x => {
                             x.selected = false;
                         });
-
-                        this.recompras = JSON.parse(localStorage.getItem("recompras"));
 
                         this.modalBusqueda = $('#exampleModal');
 
@@ -614,6 +627,6 @@
                     }
                 });
 
-            </script>
+                </script>
 
         }

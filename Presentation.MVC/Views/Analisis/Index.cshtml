@@ -103,13 +103,19 @@
                                         <th>#</th>
                                         <th>Fec. Vcto.</th>
                                         <th>Capital</th>
+                                        <th>Interes</th>
+                                        <th>P. Gracia</th>
+                                        <th>Total</th>
                                         <th>Estado</th>
                                         <th>Pagada</th>
                                     </tr>
                                     <tr v-for="cuota in detalle.cronogramaPalante[cronogramaPalanteSeleccionado - 1].cuotas">
-                                        <td>{{cuota.nNroCuota}}</td>
-                                        <td>{{fecha(cuota.dFecVcto)}}</td>
-                                        <td>{{cuota.nCapital}}</td>
+                                        <td>{{cuota.NumeroCuota}}</td>
+                                        <td>{{fecha(cuota.FechaPago)}}</td>
+                                        <td>{{cuota.amortizacion}}</td>
+                                        <td>{{cuota.interes}}</td>
+                                        <td>{{cuota.periodoGracia}}</td>
+                                        <td>{{cuota.totalCuota}}</td>
                                         <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
                                             {{NEstadoCuota(cuota.nEstadoCuota)}}
                                         </td>
@@ -141,13 +147,19 @@
                                         <th>#</th>
                                         <th>Fec. Vcto.</th>
                                         <th>Capital</th>
+                                        <th>Interes</th>
+                                        <th>P. Gracia</th>
+                                        <th>Total</th>
                                         <th>Estado</th>
                                         <th>Pagada  </th>
                                     </tr>
                                     <tr v-for="cuota in detalle.cronogramaPalante[cronogramaFondeadorSeleccionado - 1].cuotas">
-                                        <td>{{cuota.nNroCuota}}</td>
-                                        <td>{{fecha(cuota.dFecVcto)}}</td>
-                                        <td>{{cuota.nCapital}}</td>
+                                        <td>{{cuota.NumeroCuota}}</td>
+                                        <td>{{fecha(cuota.FechaPago)}}</td>
+                                        <td>{{cuota.amortizacion}}</td>
+                                        <td>{{cuota.interes}}</td>
+                                        <td>{{cuota.periodoGracia}}</td>
+                                        <td>{{cuota.totalCuota}}</td>
                                         <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
                                             {{NEstadoCuota(cuota.nEstadoCuota)}}
                                         </td>
@@ -204,18 +216,22 @@
 
                     <div class="row" v-if="screen == 'lista'">
                         <div class="col">
-                            <button style="margin-top:10px" class="btn btn-sm btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal" style="margin-bottom:10px">Buscar</button>
+                            <button 
+                                    class="btn btn-sm btn-primary btn-sm"
+                                    data-toggle="modal" 
+                                    data-target="#exampleModal" 
+                                    style="width:100%;margin-top:10px">
+                            Buscar
+                            </button>
                         </div>
                     </div>
 
                     <div class="row" v-if="screen == 'lista'">
                         <div class="col">
-                            <button 
-                                    style="margin-top:10px" 
-                                    class="btn btn-sm btn-primary btn-sm" 
-                                    data-toggle="modal" 
-                                    data-target="#modalReporteEstado" 
-                                    style="margin-bottom:10px">
+                            <button class="btn btn-sm btn-success btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#modalReporteEstado"
+                                    style="margin-bottom:10px; margin-top:10px; width:100%">
                                 Reporte por estado
                             </button>
                         </div>
@@ -223,7 +239,33 @@
 
                     <div class="row" v-if="screen == 'lista'">
                         <div class="col">
-                            <button v-if="seleccionados.length != 0" style="margin-top:10px" class="btn btn-sm btn-success btn-sm" style="margin-bottom:10px" @@click="ReporteDeuda">Excel</button>
+                            <button class="btn btn-sm btn-warning btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#modalCronogramaCOF"
+                                    style="margin-bottom:10px; width:100%">
+                                Cronograma COF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row" v-if="screen == 'lista'">
+                        <div class="col">
+                            <button class="btn btn-sm btn-warning btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#modalCalculadora"
+                                    style="margin-bottom:10px; width:100%">
+                                Calculadora
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row" v-if="screen == 'lista'">
+                        <div class="col">
+                            <button 
+                                    v-if="seleccionados.length != 0" 
+                                    class="btn btn-sm btn-success btn-sm" 
+                                    style="margin-bottom:10px;width:100%;margin-top:10px" 
+                                    @@click="ReporteDeuda">Excel</button>
                         </div>
                     </div>
 
@@ -254,6 +296,30 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                         <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalCalculadora" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Calculadora de reprogramación</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <label>Crédito Código:</label>
+                        <input type="text" name="name" v-model="cronogramaCOF" class="form-control" />
+                    </div>
+                    <div class="modal-footer">
+                        <div class="spinner-border" role="status" v-if="buscandoCalculo">
+                            <span class="sr-only">Buscando...</span>
+                        </div>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+                        <button class="btn btn-sm btn-success" @@click="">Generar</button>
                     </div>
                 </div>
             </div>
@@ -388,9 +454,9 @@
                     </div>
                     <div class="modal-body">
                         <h5>Estados:</h5>
-                        <ol >
+                        <ol>
                             <li v-for="e in nestados">
-                                <input type="checkbox" :id="'check'+e.valor" :value="e.valor" v-model="estados"/>
+                                <input type="checkbox" :id="'check'+e.valor" :value="e.valor" v-model="estados" />
                                 <label :for="'check'+e.valor">{{e.nombre}}</label>
                             </li>
                         </ol>
@@ -404,6 +470,30 @@
             </div>
         </div>
 
+        <div class="modal fade" id="modalCronogramaCOF" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Cronograma COF</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <label>Crédito Código:</label>
+                        <input type="text" name="name" v-model="cronogramaCOF" class="form-control" />
+                    </div>
+                    <div class="modal-footer">
+                        <div class="spinner-border" role="status" v-if="buscandoCronogramaCOF">
+                            <span class="sr-only">Buscando...</span>
+                        </div>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+                        <button class="btn btn-sm btn-success" @@click="CronogramaCOF">Generar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @section Scripts{
 
             <script>
@@ -411,6 +501,7 @@
                     el: '#app',
                     data: {
                         pantallaBusqueda: 0,
+                        buscandoCronogramaCOF: false,
                         busqueda: "",
                         tipoBusqueda: 0,
                         busquedaItems: [],
@@ -439,37 +530,56 @@
                             confirmed: false
                         },
                         detalle: "",
+                        cronogramaCOF: "",
                         cronogramaPalanteSeleccionado: 1,
                         cronogramaFondeadorSeleccionado: 1,
                         estados: [],
                         nestados: [
-                            { nombre: "Registrados"     ,       valor:1 },
-                            { nombre: "Vigentes"        ,       valor:2 },
-                            { nombre: "Vencidos"        ,       valor:3 },
-                            { nombre: "Pagados"         ,       valor:4 },
-                            { nombre: "Desistidos"      ,       valor:6 },
-                            { nombre: "Prejudiciales"   ,       valor:16},
+                            { nombre: "Registrados", valor: 1 },
+                            { nombre: "Vigentes", valor: 2 },
+                            { nombre: "Vencidos", valor: 3 },
+                            { nombre: "Pagados", valor: 4 },
+                            { nombre: "Desistidos", valor: 6 },
+                            { nombre: "Prejudiciales", valor: 16 },
                         ]
                     },
                     methods: {
+                        CronogramaCOF: async function () {
+                            this.buscandoCronogramaCOF = true;
+
+                            await fetch(this.api + "Cronogramas/CronogramasPalanteExcel?codigo=" + vm.cronogramaCOF)
+                                .then((transfer) => {
+                                    return transfer.blob();
+                                }).then((bytes) => {
+                                    let elm = document.createElement('a');
+                                    elm.href = URL.createObjectURL(bytes);
+                                    elm.setAttribute('download', "Cronograma-" + vm.cronogramaCOF + ".xlsx");
+                                    elm.click()
+                                }).catch((error) => {
+                                    console.log(error);
+                                });
+
+                            this.buscandoCronogramaCOF = false;
+                            console.log(res);
+                        },
                         BuscarPorEstado: async function () {
                             var formData = new FormData();
                             formData.append('Estados', vm.estados.join(","));
-                            
+
                             let res = await fetch(this.api + "Creditos/PorEstado", {
                                 method: 'POST',
                                 body: formData
                             })
-                            .then((transfer) => {
-                                return transfer.blob();
-                            }).then((bytes) => {
-                                let elm = document.createElement('a');
-                                elm.href = URL.createObjectURL(bytes);
-                                elm.setAttribute('download', "CreditosPorEstado.xlsx");
-                                elm.click()
-                            }).catch((error) => {
-                                console.log(error);
-                            });
+                                .then((transfer) => {
+                                    return transfer.blob();
+                                }).then((bytes) => {
+                                    let elm = document.createElement('a');
+                                    elm.href = URL.createObjectURL(bytes);
+                                    elm.setAttribute('download', "CreditosPorEstado.xlsx");
+                                    elm.click()
+                                }).catch((error) => {
+                                    console.log(error);
+                                });
                         },
                         ReporteDeuda: async function () {
                             var creditos = this.seleccionados.map(x => x.nCodCred).join(",");

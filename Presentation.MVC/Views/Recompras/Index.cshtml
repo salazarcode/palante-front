@@ -3,6 +3,7 @@
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
     <div class="container" id="app">
+        <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
         <div class="row">
             <div class="col-md-3">
                 <button class="btn btn-primary btn-sm" @@click="crear">Crear recompra</button>
@@ -14,25 +15,32 @@
                     <thead>
                         <tr>
                             <th>RecompraID</th>
-                            <th>Fecha Creación</th>
-                            <th>Última Modificación</th>
-                            <th>Fecha confirmación</th>
+                            <th>Fondeador</th>
+                            <th>Producto</th>
+                            <th>Creación</th>
+                            <th>Modificación</th>
+                            <th>Cierre</th>
                             <th>Monto</th>
-                            <th colspan="3">Opciones</th>
+                            <th colspan="4">Opciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(r, index) in recompras" :class="r.confirmed ? 'table-primary' : 'tr'">
+                        <tr v-for="(r, index) in recompras" :class="{'table-primary' : r.fechaCierre != '0001-01-01T00:00:00' }">
                             <td>{{r.recompraID}}</td>
-                            <td>{{GetDate(r.fechaCreacion)}}</td>
-                            <td>{{GetDate(r.fechaModificacion)}}</td>
-                            <td>{{r.fechaConfirmacion != "" ? GetDate(r.fechaConfirmacion) : "Sin confirmar"}}</td>
-                            <td>{{r.monto}}</td>
+                            <td>{{fondeadores.find(x=>x.fondeadorID == r.fondeadorID).nombre.toUpperCase()}}</td>
+                            <td>{{productos.find(x=>x.nValor == r.productoID).cNomCod.toUpperCase()}}</td>
+                            <td>{{GetDate(r.creado)}}</td>
+                            <td>{{GetDate(r.modificado)}}</td>
+                            <td>{{GetDate(r.fechaCierre) == '01-01-0001' ? 'No cerrada' : GetDate(r.fechaCierre)}}</td>
+                            <td>{{r.creditos.map(x=>x.nPrestamo).reduce((x,y)=>x+y).toFixed(2)}}</td>
                             <td>
                                 <a href="#" @@click="verDetalle(index)">Ver</a>
                             </td>
                             <td>
-                                <a href="#" data-toggle="modal" data-target="#ConfirmarCierre" @@click="n = index">Confirmar</a>
+                                <a href="#" @@click="editar(r.recompraID)">Editar</a>
+                            </td>
+                            <td>
+                                <a href="#" :data-index="index" @@click="confirmarModal(index)">Confirmar</a>
                             </td>
                             <td>
                                 <a href="#" data-toggle="modal" data-target="#ConfirmarEliminar" @@click="n = index">Eliminar</a>
@@ -111,57 +119,43 @@
 
 
 
-            <div class="modal fade" id="detalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-                <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Detalles de recompra {{detalle.recompraID}}</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <table class="table table-hover table-bordered table-sm" id="data" style="font-size:10pt">
-                                <thead>
-                                    <tr class="table-primary">
-                                        <th>CreditoID</th>
-                                        <th>Monto</th>
-                                        <th>Fecha Inicio</th>
-                                        <th>Cuotas</th>
-                                        <th>Producto</th>
-                                        <th>PersonaID</th>
-                                        <th>Nombre/Razón Social</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(c, index) in detalle.creditos">
-                                        <td>{{c.nCodCred}}</td>
-                                        <td>{{c.nPrestamo.toFixed(2)}}</td>
-                                        <td>{{GetDate(c.dFecIni)}}</td>
-                                        <td>{{c.nNroCuotas}}</td>
-                                        <td>{{c.producto.cNomCod}}</td>
-                                        <td>{{c.dni != null ? c.dni : c.ruc}}</td>
-                                        <td>{{c.dni != null ? c.nombres : c.razonSocial}}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="7"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="5"></td>
-                                        <td>Total a cancelar:</td>
-                                        <td>{{detalle.monto}}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                            <button type="button" class="btn btn-primary" @@click="doit(detalle, 'xlsx')">Excel</button>
-                        </div>
+        <div class="modal fade" id="detalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Detalles de recompra {{detalle.recompraID}}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-hover table-bordered table-sm" id="data" style="font-size:10pt">
+                            <thead>
+                                <tr class="table-primary">
+                                    <th>CreditoID</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Inicio</th>
+                                    <th>Cuotas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(c, index) in detalle.creditos">
+                                    <td>{{c.nCodCred}}</td>
+                                    <td>{{c.nPrestamo.toFixed(2)}}</td>
+                                    <td>{{GetDate(c.dFecIni)}}</td>
+                                    <td>{{c.nNroCuotas}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" @@click="doit(detalle, 'xlsx')">Excel</button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
 
 
@@ -172,6 +166,8 @@
             el: '#app',
             data: {
                 recompras: [],
+                fondeadores: [],
+                productos: [],
                 n: "",
                 mensaje: "",
                 detalle: ""
@@ -180,27 +176,58 @@
                 GetDate: function (strDate) {
                     return moment(strDate, "YYYYMMDD").format("DD-MM-YYYY");
                 },
-                confirmar: function (index) {
-                    if (!this.recompras[index].confirmed) {
+                confirmarModal: function (index) {
+                    this.n = index;
+                    if (this.recompras[index].fechaCierre != '0001-01-01T00:00:00') {
+                        this.mensaje = "Ya se confirmó esta recompra";
+                        $("#mensaje").modal("show");
+                    }
+                    else
+                        $("#ConfirmarCierre").modal("show");
+                },
+                confirmar: async function (index) {
+                    if (this.recompras[index].fechaCierre == '0001-01-01T00:00:00') {
+                        var d = (new Date()).toISOString();
+
+                        var formData = new FormData();
+                        formData.append('RecompraID', this.recompras[index].recompraID);
+                        formData.append('FechaCierre', d);
+
+                        await fetch(this.api + "Recompras/Cerrar", {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(response => response.json());
+
+
+                        this.mensaje = "Se confirmó efectivamente la recompra con fecha: " + this.GetDate(d);
+                        $("#mensaje").modal("show");
+
                         this.recompras[index].confirmed = true;
-                        this.recompras[index].fechaConfirmacion = moment().format("YYYYMMDD")
+                        this.recompras[index].fechaCierre = d;
                     }
                     else {
                         this.mensaje = "Ya se confirmó esta recompra";
                         $("#mensaje").modal("show");
                     }
                 },
-                eliminar: function (index) {
-                    if (this.recompras[index].confirmed) {
+                eliminar: async function (index) {
+                    if (this.recompras[index].fechaCierre != undefined && this.recompras[index].fechaCierre != null && this.recompras[index].fechaCierre != '') {
                         this.mensaje = "No se puede eliminar porque ya ha sido confirmado";
                         $("#mensaje").modal("show");
                     }
                     else {
+                        await fetch(this.api + "Recompras/Eliminar?RecompraID=" + this.recompras[index].recompraID).then(x => x.json());
+
+                        this.mensaje = "Eliminado con éxito";
+                        $("#mensaje").modal("show");
                         this.recompras.splice(index, 1);
                     }
                 },
+                editar: function (recompraID) {
+                    window.location.href = '@(ViewBag.domain+"Recompras/Crear?id=")' + recompraID;
+                },
                 crear: function () {
-                    localStorage.setItem("recompras", JSON.stringify(this.recompras));
                     window.location.href = "@(ViewBag.domain+"Recompras/Crear")";
                 },
                 verDetalle: function (index) {
@@ -218,32 +245,11 @@
             computed: {
             },
             async mounted() {
+                this.api = $("#endpoint").val();
 
-                if (localStorage.getItem("recompras") === null)
-                    this.recompras = [
-                        {
-                            recompraID: 1145,
-                            fechaCreacion: "20191021",
-                            fechaModificacion: "20200101",
-                            fechaConfirmacion: "",
-                            archivo: "http://archi.com/archivo.pdf",
-                            monto: "9987.25",
-                            creditos: [],
-                            confirmed: false
-                        },
-                        {
-                            recompraID: 8752,
-                            fechaCreacion: "20200120",
-                            fechaModificacion: "20200120",
-                            fechaConfirmacion: "",
-                            archivo: "http://archi.com/archivo.pdf",
-                            monto: "7894.25",
-                            creditos: [],
-                            confirmed: false
-                        }
-                    ]
-                else
-                    this.recompras = JSON.parse(localStorage.getItem("recompras"));
+                this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
+                this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
+                this.recompras = await fetch(this.api + "Recompras/All").then(x => x.json());
             }
         });
 

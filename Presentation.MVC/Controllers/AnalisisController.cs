@@ -25,5 +25,13 @@ namespace Presentation.MVC.Controllers
             ViewBag.domain = domain;
             return View();
         }
+
+        public IActionResult Credito(string credito)
+        {
+            ViewBag.endpoint = apiEndpoint;
+            ViewBag.domain = domain;
+            ViewBag.credito = credito;
+            return View("Credito");
+        }
     }
 }

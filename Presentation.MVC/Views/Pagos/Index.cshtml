@@ -136,6 +136,7 @@
                                 <th>Cuota</th>
                                 <th>Calendario</th>
                                 <th>Monto</th>
+                                <th>Concepto</th>
                                 <th>EsDeuda</th>
                             </tr>
                         </thead>
@@ -145,6 +146,7 @@
                                 <td>{{c.nNroCuota}}</td>
                                 <td>{{c.nNroCalendario}}</td>
                                 <td>{{c.monto.toFixed(2)}}</td>
+                                <td>{{c.pagoConcepto != null ? c.pagoConcepto.nombre.toUpperCase() : ''}}</td>
                                 <td>{{c.esDeuda == 1 ? 'Deuda' : 'Pago'}}</td>
                             </tr>
                         </tbody>

@@ -19,7 +19,7 @@ namespace Presentation.MVC.Controllers
             domain = _conf.GetSection("domain").Value;
         }
 
-        public IActionResult Crear(int id = -1)
+        public IActionResult Crear(int id = 0)
         {
             ViewBag.endpoint = apiEndpoint;
             ViewBag.domain = domain;
