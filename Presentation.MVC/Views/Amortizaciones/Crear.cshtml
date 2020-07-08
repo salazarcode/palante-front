@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Reprogramar";
+    ViewData["Title"] = "Amortizar";
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
 
@@ -159,51 +159,51 @@
                             <table class="table table-bordered table-hover table-sm">
                                 <tr>
                                     <td class="table-primary">Tasa</td>
-                                    <td>{{reprogramacion.tasa.toFixed(2)}}</td>
+                                    <td>{{amortizacion.tasa.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Saldo Capital</td>
-                                    <td>{{reprogramacion.saldoCapital}}</td>
+                                    <td>{{amortizacion.saldoCapital}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Nuevo Capital</td>
-                                    <td>{{reprogramacion.nuevoCapital.toFixed(2)}}</td>
+                                    <td>{{amortizacion.nuevoCapital.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Último Vcto.</td>
-                                    <td>{{fecha(reprogramacion.ultimoVencimiento)}}</td>
+                                    <td>{{fecha(amortizacion.ultimoVencimiento)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Hoy</td>
-                                    <td>{{fecha(reprogramacion.hoy)}}</td>
+                                    <td>{{fecha(amortizacion.hoy)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Días Transcurridos</td>
-                                    <td>{{reprogramacion.diasTranscurridos}}</td>
+                                    <td>{{amortizacion.diasTranscurridos}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Factor</td>
-                                    <td>{{reprogramacion.factor.toFixed(2)}}</td>
+                                    <td>{{amortizacion.factor.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Intereses transcurridos</td>
-                                    <td>{{reprogramacion.interesesTranscurridos.toFixed(2)}}</td>
+                                    <td>{{amortizacion.interesesTranscurridos.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">K + I</td>
-                                    <td>{{reprogramacion.ki.toFixed(2)}}</td>
+                                    <td>{{amortizacion.ki.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Amortización</td>
-                                    <td>{{reprogramacion.amortizacion.toFixed(2)}}</td>
+                                    <td>{{amortizacion.amortizacion.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Capital</td>
-                                    <td>{{reprogramacion.capital.toFixed(2)}}</td>
+                                    <td>{{amortizacion.capital.toFixed(2)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Total</td>
-                                    <td>{{reprogramacion.total.toFixed(2)}}</td>
+                                    <td>{{amortizacion.total.toFixed(2)}}</td>
                                 </tr>
                             </table>
                         </div>
@@ -228,8 +228,8 @@
                 mensaje: "Nada que decir",
                 codigo: "",
                 api: "",
-                reprogramacion: {
-                    reprogramacionID: 0,
+                amortizacion: {
+                    amortizacionID: 0,
                     tasa: 0,
                     saldoCapital: 0,
                     nuevoCapital: 0,
@@ -239,7 +239,7 @@
                     factor: 0,
                     interesesTranscurridos: 0,
                     ki: 0,
-                    amortizacion: 0,
+                    nAmortizacion: 0,
                     nCodCred: 0,
                     capital: 0,
                     total: 0,
@@ -251,7 +251,7 @@
             methods: {
                 guardar: async function (index) {
                     try {
-                        let res = await fetch(this.api + "Reprogramacion/Save", {
+                        let res = await fetch(this.api + "Amortizacion/Save", {
                             method: "POST",
                             headers: {
                                 'Content-Type': 'application/json'
@@ -262,7 +262,7 @@
                         console.log(e)
                     }
 
-                    location.href = '@(ViewBag.domain+"Reprogramaciones")';
+                    location.href = '@(ViewBag.domain+ "Amortizaciones")';
                 },
                 buscar: async function () {
                     this.buscarLoader = true;
@@ -284,34 +284,34 @@
                     this.cronogramaPalante = await fetch(this.api + "Cronogramas/CronogramasPalante?codigo=" + this.codigo).then(x => x.json());
                     this.cronogramaFondeador = await fetch(this.api + "Cronogramas/CronogramasFondeador?codigo=" + this.codigo).then(x => x.json());
 
-                    vm.reprogramacion.tasa = vm.credito.nTasaComp;
-                    vm.reprogramacion.nCodCred = vm.credito.nCodCred;
-                    vm.reprogramacion.nroCalendarioCOF = vm.cronogramaFondeador[0].nNroCalendario;
+                    vm.amortizacion.tasa = vm.credito.nTasaComp;
+                    vm.amortizacion.nCodCred = vm.credito.nCodCred;
+                    vm.amortizacion.nroCalendarioCOF = vm.cronogramaFondeador[0].nNroCalendario;
 
-                    vm.reprogramacion.saldoCapital = this.round((vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstado != 2).map(x => x.amortizacion).reduce((x, y) => parseFloat(x) + parseFloat(y))),2)
+                    vm.amortizacion.saldoCapital = this.round((vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstado != 2).map(x => x.amortizacion).reduce((x, y) => parseFloat(x) + parseFloat(y))),2)
 
                     var date = vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstadoCuota == 1 && x.nEstado == 0)[0].fechaPago.split("-")
-                    vm.reprogramacion.ultimoVencimiento = new Date(date[1] + "-" + date[0] + "-" + date[2]);
-                    vm.reprogramacion.diasTranscurridos = Math.round((new Date() - vm.reprogramacion.ultimoVencimiento) / (1000 * 60 * 60 * 24));
+                    vm.amortizacion.ultimoVencimiento = new Date(date[1] + "-" + date[0] + "-" + date[2]);
+                    vm.amortizacion.diasTranscurridos = Math.round((new Date() - vm.amortizacion.ultimoVencimiento) / (1000 * 60 * 60 * 24));
 
-                    vm.reprogramacion.nuevoCapital = this.round((vm.cronogramaPalante[0].cuotas.map(x => x.amortizacion).reduce((x, y) => parseFloat(x) + parseFloat(y))),2)
+                    vm.amortizacion.nuevoCapital = this.round((vm.cronogramaPalante[0].cuotas.map(x => x.amortizacion).reduce((x, y) => parseFloat(x) + parseFloat(y))),2)
 
                     //------------------------------------------------------------------------------------------------------------------------------------------
-                    vm.reprogramacion.factor = this.round((Math.pow(1 + parseFloat(vm.reprogramacion.tasa), parseFloat(vm.reprogramacion.diasTranscurridos) / 360) - 1),2);
+                    vm.amortizacion.factor = this.round((Math.pow(1 + parseFloat(vm.amortizacion.tasa), parseFloat(vm.amortizacion.diasTranscurridos) / 360) - 1),2);
 
 
-                    vm.reprogramacion.interesesTranscurridos = this.round((vm.reprogramacion.factor * parseFloat(vm.reprogramacion.saldoCapital)), 2);
+                    vm.amortizacion.interesesTranscurridos = this.round((vm.amortizacion.factor * parseFloat(vm.amortizacion.saldoCapital)), 2);
 
 
-                    vm.reprogramacion.ki = this.round((parseFloat(vm.reprogramacion.interesesTranscurridos) + parseFloat(vm.reprogramacion.saldoCapital)),2);
+                    vm.amortizacion.ki = this.round((parseFloat(vm.amortizacion.interesesTranscurridos) + parseFloat(vm.amortizacion.saldoCapital)),2);
 
 
-                    vm.reprogramacion.amortizacion = this.round((parseFloat(vm.reprogramacion.ki) + parseFloat(vm.reprogramacion.nuevoCapital)),2);
+                    vm.amortizacion.amortizacion = this.round((parseFloat(vm.amortizacion.ki) + parseFloat(vm.amortizacion.nuevoCapital)),2);
 
-                    vm.reprogramacion.capital = this.round((parseFloat(vm.reprogramacion.amortizacion) - parseFloat(vm.reprogramacion.interesesTranscurridos)),2)
+                    vm.amortizacion.capital = this.round((parseFloat(vm.amortizacion.amortizacion) - parseFloat(vm.amortizacion.interesesTranscurridos)),2)
 
 
-                    vm.reprogramacion.total = this.round((parseFloat(vm.reprogramacion.capital) + parseFloat(vm.reprogramacion.interesesTranscurridos)),2)
+                    vm.amortizacion.total = this.round((parseFloat(vm.amortizacion.capital) + parseFloat(vm.amortizacion.interesesTranscurridos)),2)
 
                     this.buscarLoader = false;
                 },

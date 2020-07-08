@@ -7,12 +7,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace Presentation.MVC.Controllers
 {
-    public class ReprogramacionesController : Controller
+    public class AmortizacionesController : Controller
     {
         private readonly IConfiguration _conf;
         private readonly string apiEndpoint;
         private readonly string domain;
-        public ReprogramacionesController(IConfiguration conf)
+        public AmortizacionesController(IConfiguration conf)
         {
             _conf = conf;
             apiEndpoint = _conf.GetSection("apiendpoint").Value;

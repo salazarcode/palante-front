@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Reprogramaciones";
+    ViewData["Title"] = "Amortizaciones";
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
     <div class="container" id="app">
@@ -14,7 +14,7 @@
                 <table class="table table-hover table-bordered table-sm" style="margin-top:20px">
                     <thead>
                         <tr>
-                            <th>ReproID</th>
+                            <th>AmortID</th>
                             <th>Nro. Calen.</th>
                             <th>Capital</th>
                             <th>Total</th>
@@ -25,15 +25,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(r, index) in reprogramaciones"
+                        <tr v-for="(a, index) in amortizaciones"
                             :class="{'table-primary':(new Date(r.confirmacion)).getFullYear() != 1 }">
-                            <td>{{r.reprogramacionID}}</td>
-                            <td>{{r.nroCalendarioCOF}}</td>
-                            <td>{{r.capital}}</td>
-                            <td>{{r.total}}</td>
-                            <td>{{r.nCodCred}}</td>
-                            <td>{{r.total}}</td>
-                            <td>{{(new Date(r.confirmacion)).getFullYear() != 1 ? GetDate(r.confirmacion) : "No Confirmado"}}</td>
+                            <td>{{a.amortizacionID}}</td>
+                            <td>{{a.nroCalendarioCOF}}</td>
+                            <td>{{a.capital}}</td>
+                            <td>{{a.total}}</td>
+                            <td>{{a.nCodCred}}</td>
+                            <td>{{a.total}}</td>
+                            <td>{{(new Date(a.confirmacion)).getFullYear() != 1 ? GetDate(a.confirmacion) : "No Confirmado"}}</td>
                             <td><a href="#" @@click="eliminar(index)">Eliminar</a></td>
                             <td><a href="#" @@click="confirmar(index)">Confirmar</a></td>
                             <td><a href="#" @@click="CronogramaCOF(index)">Cronograma</a></td>
@@ -41,7 +41,7 @@
                                 <a href="#"
                                    data-toggle="modal"
                                    data-target="#modalDetalle"
-                                   @@click="reprogramacion = reprogramaciones[index]">Detalle</a>
+                                   @@click="amortizacion = amortizaciones[index]">Detalle</a>
                             </td>
 
 
@@ -65,51 +65,51 @@
                         <table class="table table-bordered table-hover table-sm">
                             <tr>
                                 <td class="table-primary">Tasa</td>
-                                <td>{{reprogramacion.tasa}}</td>
+                                <td>{{amortizacion.tasa}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Saldo Capital</td>
-                                <td>{{reprogramacion.saldoCapital}}</td>
+                                <td>{{amortizacion.saldoCapital}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Nuevo Capital</td>
-                                <td>{{reprogramacion.nuevoCapital}}</td>
+                                <td>{{amortizacion.nuevoCapital}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Último Vcto.</td>
-                                <td>{{GetDate(reprogramacion.ultimoVencimiento)}}</td>
+                                <td>{{GetDate(amortizacion.ultimoVencimiento)}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Hoy</td>
-                                <td>{{GetDate(reprogramacion.hoy)}}</td>
+                                <td>{{GetDate(amortizacion.hoy)}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Días Transcurridos</td>
-                                <td>{{reprogramacion.diasTranscurridos}}</td>
+                                <td>{{amortizacion.diasTranscurridos}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Factor</td>
-                                <td>{{reprogramacion.factor}}</td>
+                                <td>{{amortizacion.factor}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Intereses transcurridos</td>
-                                <td>{{reprogramacion.interesesTranscurridos}}</td>
+                                <td>{{amortizacion.interesesTranscurridos}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">K + I</td>
-                                <td>{{reprogramacion.ki}}</td>
+                                <td>{{amortizacion.ki}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Amortización</td>
-                                <td>{{reprogramacion.amortizacion}}</td>
+                                <td>{{amortizacion.nAmortizacion}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Capital</td>
-                                <td>{{reprogramacion.capital}}</td>
+                                <td>{{amortizacion.capital}}</td>
                             </tr>
                             <tr>
                                 <td class="table-primary">Total</td>
-                                <td>{{reprogramacion.total}}</td>
+                                <td>{{amortizacion.total}}</td>
                             </tr>
                         </table>
                     </div>
@@ -146,16 +146,16 @@
                 var vm = new Vue({
                     el: '#app',
                     data: {
-                        reprogramaciones: [],
+                        amortizaciones: [],
                         api: "",
-                        reprogramacion: "",
+                        amortizacion: "",
                         mensaje:""
                     },
                     methods: {
                         CronogramaCOF: async function (index) {
                             this.buscandoCronogramaCOF = true;
 
-                            await fetch(this.api + "Cronogramas/CronogramasPalanteExcel?codigo=" + vm.reprogramaciones[index].nCodCred)
+                            await fetch(this.api + "Cronogramas/CronogramasPalanteExcel?codigo=" + vm.amortizaciones[index].nCodCred)
                                 .then((transfer) => {
                                     return transfer.blob();
                                 }).then((bytes) => {
@@ -173,22 +173,22 @@
                             return moment(strDate, "YYYYMMDD").format("DD-MM-YYYY");
                         },
                         confirmar: async function (index) {
-                            if ((new Date(vm.reprogramaciones[index].confirmacion)).getFullYear() != 1) {
+                            if ((new Date(vm.amortizaciones[index].confirmacion)).getFullYear() != 1) {
                                 this.mensaje = "Ya se confirmó y cambió el cronograma, no puede reconfirmarlo";
                                 $("#modalMensaje").modal("show");
                                 return;
                             }
                             else {
-                                let repro = vm.reprogramaciones[index];
+                                let repro = vm.amortizaciones[index];
                                 repro.confirmacion = (new Date()).toISOString();
-                                let res = await fetch(this.api + "Reprogramacion/Save", {
+                                let res = await fetch(this.api + "Amortizacion/Save", {
                                     method: "POST",
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
                                     body: JSON.stringify(repro)
                                 }).then(x => x.json());
-                                location.href = '@(ViewBag.domain+"Reprogramaciones")';
+                                location.href = '@(ViewBag.domain+ "Amortizaciones")';
                             }
                         },
                         eliminar: async function (index) {
@@ -199,19 +199,19 @@
                             } else {
 
                                 var repro = vm.reprogramaciones[index];
-                                let res = await fetch(this.api + "Reprogramacion/Delete?input="+repro.reprogramacionID).then(x => x.json());
-                                location.href = '@(ViewBag.domain+"Reprogramaciones")';
+                                let res = await fetch(this.api + "Amortizacion/Delete?input="+repro.reprogramacionID).then(x => x.json());
+                                location.href = '@(ViewBag.domain+ "Amortizaciones")';
                             }
                         },
                         crear: function () {
-                            location.href = '@(ViewBag.domain+"Reprogramaciones/Crear")';
+                            location.href = '@(ViewBag.domain+ "Amortizaciones/Crear")';
                         }
                     },
                     computed: {
                     },
                     async mounted() {
                         this.api = $("#endpoint").val();
-                        this.reprogramaciones = await fetch(this.api + "Reprogramacion/All").then(x => x.json());
+                        this.reprogramaciones = await fetch(this.api + "Amortizacion/All").then(x => x.json());
                         console.log(this.reprogramaciones)
                     }
                 });
