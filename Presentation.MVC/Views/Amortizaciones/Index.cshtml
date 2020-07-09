@@ -26,7 +26,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="(a, index) in amortizaciones"
-                            :class="{'table-primary':(new Date(r.confirmacion)).getFullYear() != 1 }">
+                            :class="{'table-primary':(new Date(a.confirmacion)).getFullYear() != 1 }">
                             <td>{{a.amortizacionID}}</td>
                             <td>{{a.nroCalendarioCOF}}</td>
                             <td>{{a.capital}}</td>
@@ -192,7 +192,7 @@
                             }
                         },
                         eliminar: async function (index) {
-                            if ((new Date(vm.reprogramaciones[index].confirmacion)).getFullYear() != 1) {
+                            if ((new Date(vm.amortizaciones[index].confirmacion)).getFullYear() != 1) {
                                 this.mensaje = "Ya se confirmó y cambió el cronograma, no puede eliminarlo";
                                 $("#modalMensaje").modal("show");
                                 return;
@@ -211,8 +211,8 @@
                     },
                     async mounted() {
                         this.api = $("#endpoint").val();
-                        this.reprogramaciones = await fetch(this.api + "Amortizacion/All").then(x => x.json());
-                        console.log(this.reprogramaciones)
+                        this.amortizaciones = await fetch(this.api + "Amortizacion/All").then(x => x.json());
+                        console.log(this.amortizacion)
                     }
                 });
 

@@ -35,7 +35,9 @@
                             <th>Producto</th>
                             <th>Modificada</th>
                             <th>Desembolso</th>
-
+                            <th>CreadoPor</th>
+                            <th>Creditos</th>
+                            <th>EsRepro</th>
                             <th>Precio</th>
                             <th colspan="4">Opciones</th>
                         </tr>
@@ -49,7 +51,9 @@
                             <td>{{cartera.producto.cNomCod}}</td>
                             <td>{{fecha(cartera.modificado)}}</td>
                             <td>{{estaCerrada(cartera.fechaDesembolso) ? fecha2(cartera.fechaDesembolso) : 'Aún no definido' }}</td>
-
+                            <td>{{cartera.creadoPor}}</td>
+                            <td>{{cartera.n}}</td>
+                            <td>{{cartera.esrepro ? "Sí" : "No"}}</td>
                             <td>{{cartera.precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
                             <td><a href="#" @@click="eliminar(cartera.carteraID, cartera.productoID)">Eliminar</a></td>
                             <td><a href="#" @@click="editarCartera(cartera)">Editar</a></td>

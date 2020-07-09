@@ -199,6 +199,7 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" @@click="pantallaBusqueda = 0" v-if="pantallaBusqueda==2">Atras</button>
+                        <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
                         <button class="btn btn-sm btn-success" @@click="buscar" v-if="pantallaBusqueda==0">Buscar</button>
                     </div>
                 </div>
@@ -317,7 +318,6 @@
                 mensajeCargando: "Cargando...",
                 mensaje: "Cargando...",
                 confirmarAgregar: "",
-                repro: false,
                 page: 1,
                 pagesize: 5,
                 creado:"",
@@ -443,10 +443,9 @@
                         FondeadorID: this.fondeador,
                         Creditos: this.seleccionados.map(x => x.nCodCred).join(','),
                         ProductoID: this.producto,
-                        Creado: this.creado
+                        Creado: this.creado,
+                        esrepro: this.repro == 0 ? false : true
                     };
-
-                    console.log(cartera);
 
                     var formData = new FormData();
                     formData.append('CarteraID', cartera.CarteraID);
@@ -454,6 +453,7 @@
                     formData.append('Creditos', cartera.Creditos);
                     formData.append('ProductoID', cartera.ProductoID);
                     formData.append('Creado', cartera.Creado);
+                    formData.append('esrepro', cartera.esrepro);
 
                     let res = await fetch(this.api + "Carteras/Save", {
                         method: 'POST',
@@ -649,6 +649,7 @@
                     this.generalLoader = true;
                     this.cartera = await fetch(this.api + "Carteras/Find?CarteraID=" + vm.carteraID + "&ProductoID=" + vm.producto).then(x => x.json());
                     this.generalLoader = false;
+                    this.repro = this.cartera.esrepro;
 
                     this.fondeador = this.cartera.fondeador.fondeadorID;
                     this.producto = this.cartera.productoID;
