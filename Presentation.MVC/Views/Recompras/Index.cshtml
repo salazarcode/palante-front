@@ -32,7 +32,7 @@
                             <td>{{GetDate(r.creado)}}</td>
                             <td>{{GetDate(r.modificado)}}</td>
                             <td>{{GetDate(r.fechaCierre) == '01-01-0001' ? 'No cerrada' : GetDate(r.fechaCierre)}}</td>
-                            <td>{{r.creditos.map(x=>x.nPrestamo).reduce((x,y)=>x+y).toFixed(2)}}</td>
+                            <td>{{formatMoney(r.creditos.map(x=>x.nPrestamo).reduce((x,y)=>x+y))}}</td>
                             <td>
                                 <a href="#" @@click="verDetalle(index)">Ver</a>
                             </td>
@@ -175,6 +175,10 @@
             methods: {
                 GetDate: function (strDate) {
                     return moment(strDate, "YYYYMMDD").format("DD-MM-YYYY");
+                },
+
+                formatMoney: function (num) {
+                    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                 },
                 confirmarModal: function (index) {
                     this.n = index;

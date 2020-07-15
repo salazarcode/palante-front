@@ -46,7 +46,7 @@
                                                 <td>{{credito.nCodCred}}</td>
                                                 <td>{{Moneda(credito.nMoneda)}}</td>
                                                 <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                                <td>{{credito.precio}}</td>
+                                                <td>{{formatMoney(credito.precio)}}</td>
                                                 <td>{{credito.nTasaComp}}</td>
                                                 <td>{{credito.nNroCuotas}}</td>
                                                 <td>{{fecha(credito.dFecVcto)}}</td>
@@ -70,7 +70,7 @@
 
                             <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
                                 <div class="card-body"  style="font-size:10pt">
-                                    <table v-if="cronogramaFondeador.length != 0" class="table table-bordered table-sm table-hover">
+                                    <table v-if="cronogramaPalante.length != 0" class="table table-bordered table-sm table-hover">
                                         <tr>
                                             <th>#</th>
                                             <th>Fec. Vcto.</th>
@@ -81,14 +81,14 @@
                                             <th>Estado</th>
                                             <th>Pagada</th>
                                         </tr>
-                                        <tr v-for="cuota in cronogramaFondeador[0].cuotas"
+                                        <tr v-for="cuota in cronogramaPalante[cronogramaPalante.length - 1].cuotas"
                                             :class="{ 'table-success' : cuota.nEstado ==  2  }">
                                             <td>{{cuota.numeroCuota}}</td>
                                             <td>{{cuota.fechaPago}}</td>
-                                            <td>{{cuota.amortizacion}}</td>
-                                            <td>{{cuota.interes}}</td>
-                                            <td>{{cuota.periodoGracia}}</td>
-                                            <td>{{cuota.totalCuota}}</td>
+                                            <td>{{formatMoney(cuota.amortizacion)}}</td>
+                                            <td>{{formatMoney(cuota.interes)}}</td>
+                                            <td>{{formatMoney(cuota.periodoGracia)}}</td>
+                                            <td>{{formatMoney(cuota.totalCuota)}}</td>
                                             <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
                                                 {{NEstadoCuota(cuota.nEstadoCuota)}}
                                             </td>
@@ -110,7 +110,7 @@
                             </div>
                             <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
                                 <div class="card-body"  style="font-size:10pt">
-                                    <table v-if="cronogramaPalante.length != 0" class="table table-bordered table-sm table-hover">
+                                    <table v-if="cronogramaFondeador.length != 0" class="table table-bordered table-sm table-hover">
                                         <tr>
                                             <th>#</th>
                                             <th>Fec. Vcto.</th>
@@ -121,14 +121,14 @@
                                             <th>Estado</th>
                                             <th>Pagada</th>
                                         </tr>
-                                        <tr v-for="cuota in cronogramaPalante[0].cuotas"
+                                        <tr v-for="cuota in cronogramaFondeador[0].cuotas"
                                             :class="{ 'table-success' : cuota.nEstado ==  2  }">
                                             <td>{{cuota.numeroCuota}}</td>
-                                            <td>{{fecha(cuota.fechaPago)}}</td>
-                                            <td>{{cuota.amortizacion}}</td>
-                                            <td>{{cuota.interes}}</td>
-                                            <td>{{cuota.periodoGracia}}</td>
-                                            <td>{{cuota.totalCuota}}</td>
+                                            <td>{{cuota.fechaPago}}</td>
+                                            <td>{{formatMoney(cuota.amortizacion)}}</td>
+                                            <td>{{formatMoney(cuota.interes)}}</td>
+                                            <td>{{formatMoney(cuota.periodoGracia)}}</td>
+                                            <td>{{formatMoney(cuota.totalCuota)}}</td>
                                             <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
                                                 {{NEstadoCuota(cuota.nEstadoCuota)}}
                                             </td>
@@ -145,9 +145,15 @@
 
                 <div class="col-md-4"  style="font-size:10pt">
                     <div style="margin-bottom:10px">
-                        <input type="text" name="codigo" v-model="codigo" class="form-control" style="margin-bottom:10px" @@keyup.enter="buscar" />
+                        <input type="text"
+                               name="codigo"
+                               v-model="codigo"
+                               class="form-control"
+                               placeholder="Texto de busqueda"
+                               style="margin-bottom:10px; margin-top:10px"
+                               @@keyup.enter="buscar" />
                         <button class="btn btn-primary btn-sm" style="margin-right:10px" @@click="buscar" :disabled="codigo == ''">Buscar</button>
-                        <button class="btn btn-success btn-sm float-right" @@click="guardar" >Guardar</button>
+                        <button class="btn btn-success btn-sm float-right" @@click="guardar">Guardar</button>
                         <div class="spinner-border spinner-border-sm text-danger"
                              role="status"
                              v-if="buscarLoader">
@@ -159,15 +165,15 @@
                             <table class="table table-bordered table-hover table-sm">
                                 <tr>
                                     <td class="table-primary">Tasa</td>
-                                    <td>{{amortizacion.tasa.toFixed(2)}}</td>
+                                    <td>{{amortizacion.tasa.toFixed(6)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Saldo Capital</td>
-                                    <td>{{amortizacion.saldoCapital}}</td>
+                                    <td>{{formatMoney(amortizacion.saldoCapital)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Nuevo Capital</td>
-                                    <td>{{amortizacion.nuevoCapital.toFixed(2)}}</td>
+                                    <td>{{formatMoney(amortizacion.nuevoCapital)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Último Vcto.</td>
@@ -183,27 +189,27 @@
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Factor</td>
-                                    <td>{{amortizacion.factor.toFixed(2)}}</td>
+                                    <td>{{amortizacion.factor.toFixed(6)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Intereses transcurridos</td>
-                                    <td>{{amortizacion.interesesTranscurridos.toFixed(2)}}</td>
+                                    <td>{{formatMoney(amortizacion.interesesTranscurridos)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">K + I</td>
-                                    <td>{{amortizacion.ki.toFixed(2)}}</td>
+                                    <td>{{formatMoney(amortizacion.ki)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Amortización</td>
-                                    <td>{{amortizacion.amortizacion.toFixed(2)}}</td>
+                                    <td>{{formatMoney(amortizacion.amortizacion)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Capital</td>
-                                    <td>{{amortizacion.capital.toFixed(2)}}</td>
+                                    <td>{{formatMoney(amortizacion.capital)}}</td>
                                 </tr>
                                 <tr>
                                     <td class="table-primary">Total</td>
-                                    <td>{{amortizacion.total.toFixed(2)}}</td>
+                                    <td>{{formatMoney(amortizacion.total)}}</td>
                                 </tr>
                             </table>
                         </div>
@@ -268,9 +274,9 @@
                     this.buscarLoader = true;
 
                     var formData = new FormData();
-                    formData.append('Tipo', 'credito');
                     formData.append('Query', this.codigo);
                     formData.append('Fecha', (new Date()).toISOString());
+                    formData.append('EnFondeador', true);
 
                     let res = (await fetch(this.api + "Creditos/Search", {
                         method: 'POST',
@@ -290,7 +296,12 @@
 
                     vm.amortizacion.saldoCapital = this.round((vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstado != 2).map(x => x.amortizacion).reduce((x, y) => parseFloat(x) + parseFloat(y))),2)
 
-                    var date = vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstadoCuota == 1 && x.nEstado == 0)[0].fechaPago.split("-")
+                    if (vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstadoCuota == 1 && x.nEstado == 0).length != 0)
+                        var date = vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstadoCuota == 1 && x.nEstado == 0)[0].fechaPago.split("-");
+                    else
+                        var date = vm.cronogramaFondeador[0].cuotas.filter(x => x.nEstado == 0)[0].fechaPago.split("-");
+
+
                     vm.amortizacion.ultimoVencimiento = new Date(date[1] + "-" + date[0] + "-" + date[2]);
                     vm.amortizacion.diasTranscurridos = Math.round((new Date() - vm.amortizacion.ultimoVencimiento) / (1000 * 60 * 60 * 24));
 
@@ -342,7 +353,7 @@
                     }
                 },
                 formatMoney: function (num) {
-                    return num.toFixed(2)
+                    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                 },
                 Moneda: function (moneda) {
                     switch (moneda) {

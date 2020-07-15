@@ -22,6 +22,7 @@
                         <th>Ver</th>
                         <th>Eliminar</th>
                         <th>Archivos</th>
+                        <th>Cerrar</th>
 
                     </tr>
                 </thead>
@@ -32,7 +33,7 @@
                         <td>{{r.producto.cNomCod}}</td>
                         <td>{{GetDate(r.creado)}}</td>
                         <td>{{GetDate(r.modificado)}}</td>
-                        <td>{{r.fechaCierre == '0001-01-01T00:00:00' ? "No Cerrada" : r.fechaCierre}}</td>
+                        <td>{{r.fechaCierre == '0001-01-01T00:00:00' ? "No Cerrada" : GetDate(r.fechaCierre)}}</td>
                         <td>
                             <a href="#" @@click="verDetalle(index)">Ver</a>
                         </td>
@@ -42,9 +43,9 @@
                         <td>
                             <a href="#" @@click="getArchivos(r.pagoID)">Archivos</a>
                         </td>
-                        @*<td>
-            <a href="#" data-toggle="modal" data-target="#ConfirmarCierre" @@click="n = index">Confirmar</a>
-        </td>*@
+                        <td>
+                            <a href="#" data-toggle="modal" data-target="#ConfirmarCierre" @@click="n = index">Confirmar</a>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -192,10 +193,10 @@
                 GetDate: function (strDate) {
                     return moment(strDate, "YYYYMMDD").format("DD-MM-YYYY");
                 },
-                confirmar: function (index) {
-                    if (!this.pagos[index].confirmed) {
-                        this.pagos[index].confirmed = true;
-                        this.pagos[index].fechaConfirmacion = moment().format("YYYYMMDD")
+                confirmar: async function (index) {
+                    if (this.pagos[index].fechaCierre == '0001-01-01T00:00:00') {
+                        await fetch(this.api + "Pagos/Confirmar?pagoID=" + vm.pagos[index].pagoID);
+                        window.location.href = '@(ViewBag.domain+"Pagos")';
                     }
                     else {
                         this.mensaje = "Ya se confirmó este pago";

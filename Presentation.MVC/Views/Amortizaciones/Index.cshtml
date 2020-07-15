@@ -181,13 +181,8 @@
                             else {
                                 let repro = vm.amortizaciones[index];
                                 repro.confirmacion = (new Date()).toISOString();
-                                let res = await fetch(this.api + "Amortizacion/Save", {
-                                    method: "POST",
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify(repro)
-                                }).then(x => x.json());
+                                await fetch(this.api + "Amortizacion/Cerrar?AmortizacionID=" + repro.amortizacionID)
+                                    .then(x => x.json());
                                 location.href = '@(ViewBag.domain+ "Amortizaciones")';
                             }
                         },

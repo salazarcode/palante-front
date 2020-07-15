@@ -8,110 +8,35 @@
         <input type="hidden" id="domain" name="domain" value="@ViewBag.domain" />
 
         <div class="container">
-            <div class="row" style="margin-bottom:15px">
-                <div class="col-md-4">
-                    <button class="btn btn-warning" @@click="CubrirDeficit">Cubrir Deficit</button>
-                </div>
-            </div>
             <div class="row">
-                <div class="col-md-10">
-                    <table class="table table-hover table-bordered table-sm" style="font-size:10pt">
-                        <thead>
-                            <tr>
-                                <th style="width:30px">
-                                    <input type="checkbox"
-                                           class="form-control"
-                                           @@click="seleccionarTodo"
-                                           :checked="seleccionadoTodo" />
-                                </th>
-                                <th>CreditoID</th>
-                                <th>Cuotas Totales</th>
-                                <th>Nro. de Cuota</th>
-                                <th>Fecha Vencimiento</th>
-                                <th>Monto</th>
-                                <th>Disponible Usuario</th>
-                                <th>Cuenta Por Cobrar</th>
-                                <th>A pagar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(c, index) in cuotasFiltradas"
-                                :class="{'table-primary':c.selected}">
-                                <td>
-                                    <input type="checkbox" class="form-control" id="seleccionarTodos" :checked="c.selected" @@click="seleccionar($event,index)" />
-                                </td>
-                                <td>
-                                    <a href="#" @@click="DetalleCredito(c.nCodCred)">{{c.nCodCred}}</a>
-                                </td>
-                                <td>{{c.nNroCuotas}}</td>
-                                <td>{{c.nNroCuota}}</td>
-                                <td>{{GetDate(c.dFecVcto)}}</td>
-                                <td>{{c.monto.toFixed(2)}}</td>
-                                <td :class="{ 'table-danger' : c.disponible < c.monto }">{{c.disponible}}</td>
-                                <td :class="{ 'table-danger' : c.cuentaPorCobrar != 0 }">{{ c.cuentaPorCobrar.toFixed(2) }}</td>
-                                <td style="width:150px" :class="{'table-danger':c.aPagar<c.monto}">
-                                    <input type="number"
-                                           :disabled="f==0 || p==0"
-                                           class="form-control"
-                                           v-model="c.aPagar"
-                                           @@change="changeAPagar(index)"
-                                           @@keyup="changeAPagar(index)" />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="col-md-2">
-                    <div class="row" style="margin-top:20px">
-                        <div class="col-md-12">
-                            <label>Fondeador: </label>
-                            <img src="~/img/loader.gif"
-                                 v-if="loaderFondeador"
-                                 height="40"
-                                 width="40"
-                                 style="margin:20px"
-                                 alt="Loader image" />
-                            <div class="list-group">
-                                <a href="#"
-                                   v-for="(fondeador, index) in fondeadores"
-                                   @@click="f = fondeador.fondeadorID;filter()"
-                                   style="padding:5px !important"
-                                   :class="{'list-group-item':true, 'list-group-item-action':true, 'active':f == fondeador.fondeadorID}">
-                                    {{fondeador.nombre}}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:20px">
-                        <div class="col-md-12">
-                            <label>Producto:</label>
-                            <img src="~/img/loader.gif"
-                                 v-if="loaderProducto"
-                                 height="40"
-                                 width="40"
-                                 style="margin:20px"
-                                 alt="Loader image" />
-                            <div class="list-group">
-                                <a href="#"
-                                   v-for="(producto, index) in productos"
-                                   @@click="p = producto.nValor;filter()"
-                                   style="padding:5px !important"
-                                   :class="{'list-group-item':true, 'list-group-item-action':true, 'active': p == producto.nValor}">
-                                    {{producto.cNomCod}}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:20px">
-                        <div class="col-md-12">
-                            <label for="total">Total</label>
-                            <input type="text" class="form-control" name="total" disabled v-model="total" />
-                            <br />
-                            <button class="btn btn-success btn-sm" @*data-toggle="modal" data-target="#confirmarGuardar"*@ @@click="guardar">Guardar</button>
-                        </div>
-                    </div>
-                </div>
+                <div class="col-md-12" style="max-height:400px;overflow-y:auto">
 
+                    <div id="accordion">
+                        <div class="card" v-for="credito in creditos">
+                            <div class="card-header" id="headingOne">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        {{credito.nCodCred}} - {{credito.dni}} - {{credito.ruc}} - {{credito.nombres}} - {{credito.razonSocial}}
+                                    </button>
+                                </h5>
+                            </div>
+
+                            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                                <div class="card-body">
+                                    <ul>
+                                        <li
+                                            v-for="cuota in credito.cuotasVencidasVigentes"                                            
+                                            >
+                                            Nro.: {{cuota.nCuota}}, Monto: {{cuota.nCuotaMensual}}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
             </div>
 
 
@@ -127,16 +52,7 @@
                         </div>
                         <div class="modal-body">
                             <p>Confirmas que deseas guardar del pago de total <b>{{total}}</b>, integrado por las cuotas: </p>
-                            <ul>
-                                <li v-for="c in cuotasFiltradas.filter(x=>x.selected)">
-                                    <b>ID:</b>
-                                    {{c.nCodCred}} -
-                                    <b>Cuota Nro.:</b>
-                                    {{c.nNroCuota}} -
-                                    <b>Monto:</b>
-                                    {{c.monto.toFixed(2)}}
-                                </li>
-                            </ul>
+
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -203,9 +119,9 @@
                     el: '#app',
                     data: {
                         cuotas: [],
+                        loaderCuotas: false,
                         loaderFondeador: false,
                         loaderProducto: false,
-                        cuotasFiltradas: [],
                         productos: [],
                         fondeadores: [],
                         api: "",
@@ -227,7 +143,8 @@
                         },
                         detalle: "",
                         seleccionadoTodo: "",
-                        creditoDetallado: ""
+                        creditoDetallado: "",
+                        creditos: []
                     },
                     methods: {
                         changeAPagar: function (index) {
@@ -240,7 +157,7 @@
                         filter: function () {
                             if (this.f != 0 && this.p != 0) {
                                 this.cuotasFiltradas = [];
-                                this.cuotas.filter(x => x.producto == vm.p && x.fondeador == vm.f)
+                                this.cuotas.filter(x => x.nSubProd == vm.p && x.fondeadorID == vm.f)
                                     .forEach(e => vm.cuotasFiltradas.push(e));
                             }
                         },
@@ -280,6 +197,10 @@
                             });
                             this.sumatoria();
                         },
+
+                        formatMoney: function (num) {
+                            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        },
                         seleccionarTodo: function () {
                             if (this.f == 0 || this.p == 0) {
                                 this.mensaje = this.mensajeFondeadorProducto;
@@ -293,7 +214,7 @@
                             this.sumatoria();
                         },
                         seleccionar: function (event, index) {
-                            if (this.f == 0 || this.p == 0) {
+                            if (this.f == '' || this.p == 0) {
                                 this.mensaje = this.mensajeFondeadorProducto;
                                 $("#modalMensaje").modal("show");
                                 return;
@@ -309,9 +230,9 @@
                         sumatoria: function () {
                             let res = 0;
                             this.cuotasFiltradas.filter(x => x.selected).forEach(x => {
-                                res += x.monto;
+                                res += x.aPagar;
                             });
-                            this.total = res.toFixed(2);
+                            this.total = res;
                         },
                         vigente: function (fecha) {
                             return fecha.getMonth() == (new Date()).getMonth();
@@ -326,7 +247,7 @@
                                 joined.push(x.nCodCred);
                                 joined.push(x.nNroCalendario);
                                 joined.push(x.nNroCuota);
-                                joined.push(parseFloat(x.monto));
+                                joined.push(parseFloat(x.aPagar));
                                 joined.push(false)
 
                                 return joined.join(",")
@@ -348,7 +269,7 @@
 
                             var formData = new FormData();
                             formData.append('pagoID', 0);
-                            formData.append('FondeadorID', this.f);
+                            formData.append('FondeadorID', this.f == 'COOPAC' ? 1 : 2);
                             formData.append('ProductoID', this.p);
                             formData.append('Creador', 'krobles');
                             formData.append('Pagos', detalles.join(";"));
@@ -357,7 +278,6 @@
                                 method: 'POST',
                                 body: formData
                             }).then(response => response.json());
-
                             window.location.href = '@(ViewBag.domain+"Pagos")';
                         },
                         random: function (min, max) {
@@ -368,7 +288,7 @@
                         suma: function () {
                             let res = 0;
                             this.cuotasFiltradas.filter(x => x.selected).forEach(x => {
-                                res += x.monto;
+                                res += x.aPagar;
                             });
                             return res;
                         }
@@ -377,69 +297,21 @@
                         this.api = $("#endpoint").val();
                         this.domain = $("#domain").val();
 
-                        this.cuotas = [
-                            {
-                                nCodCred: 123550,
-                                nNroCuota: 1,
-                                nNroCuotas: this.random(1, 60),
-                                monto: this.random(200, 500),
-                                disponible: this.random(0, 500).toFixed(2),
-                                dFecVcto: new Date(),
-                                cuentaPorCobrar: 0,
-                                vencida: false,
-                                corriente: false,
-                                futura: false,
-                                fondeador: 1,
-                                producto: 2
-                            },
-                            {
-                                nCodCred: 123549,
-                                nNroCuota: 3,
-                                nNroCuotas: this.random(1, 60),
-                                monto: 652.22,
-                                disponible: 65.22,
-                                dFecVcto: new Date(),
-                                cuentaPorCobrar: 0,
-                                vencida: false,
-                                corriente: false,
-                                futura: false,
-                                fondeador: 1,
-                                producto: 2
-                            },
-                            {
-                                nCodCred: 123550,
-                                nNroCuota: 2,
-                                nNroCuotas: this.random(1, 60),
-                                monto: this.random(200, 500),
-                                disponible: this.random(0, 500).toFixed(2),
-                                dFecVcto: new Date(),
-                                cuentaPorCobrar: 0,
-                                vencida: false,
-                                corriente: false,
-                                futura: false,
-                                fondeador: 1,
-                                producto: 2
-                            }
-                        ]
-                        this.cuotas.forEach(x => {
-                            x.aPagar = x.monto;
-                            x.nNroCalendario = 1;
-                            if (x.aPagar > x.disponible && x.disponible < x.monto) {
-                                x.cuentaPorCobrar = x.aPagar - x.disponible;
-                            }
-                            else
-                                x.cuentaPorCobrar = 0;
-                        });
-
-                        this.cuotasFiltradas = this.cuotas;
-
-                        this.cuotas.forEach(x => {
-                            x.selected = false;
-                        });
-
-                        this.pagos = JSON.parse(localStorage.getItem("pagos"));
+                        this.loaderCuotas = true;
 
                         this.loaderFondeador = true;
+                        this.loaderProducto = true;
+                        var formData = new FormData();
+                        formData.append('nEstadoCuota', "1,2");
+                        formData.append('nEstado', "0");
+
+                        this.creditos = await fetch(this.api + "Cuotas/PorEstados", {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(response => response.json());
+
+
                         fetch(this.api + "Fondeador/All")
                             .then(x => x.json())
                             .then(res => {
@@ -447,7 +319,6 @@
                                 vm.loaderFondeador = false;
                             });
 
-                        this.loaderProducto = true;
                         fetch(this.api + "Producto/All")
                             .then(x => x.json())
                             .then(res => {
