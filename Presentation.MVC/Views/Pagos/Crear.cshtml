@@ -9,7 +9,7 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <p><b>Fondeador:</b></p>
                     <div class="form-check" v-for="(fondeador, index) in fondeadores">
                         <input class="form-check-input" type="radio" :id="'fondeador'+index" :value="fondeador.fondeadorID" @@change="Filtrar" v-model="f">
@@ -57,7 +57,7 @@
                         </label>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <b>Estados:</b>
                     <br />
                     <input type="checkbox" id="jack" value="1" v-model="estados" @@change="changeEstado">
@@ -65,9 +65,6 @@
                     <br />
                     <input type="checkbox" id="john" value="2" v-model="estados" @@change="changeEstado">
                     <label for="john">Vencido</label>
-                    <br />
-                    <input type="checkbox" id="mike" value="3" v-model="estados" @@change="changeEstado">
-                    <label for="mike">Por Vencer</label>
                 </div>
                 <div class="col-md-4">
                     <div class="row">
@@ -199,7 +196,26 @@
                     </div>
 
                     <div v-if="credito != ''">
+                        <button class="btn btn-primary btn-sm float-right" @@click="BuscarCuotasPorVencer">Ver cuotas por vencer</button>
                         <p>Disponible: <b>{{formatMoney(credito.disponible)}}</b></p>
+
+                        <div v-if="loaderCuotasPorVencer" style="margin-top:5px">
+                            <p>
+                                <img src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
+                                <b>Buscado Cuotas por vencer... </b>
+                            </p>
+                        </div>
+
+                        <div v-if="alertCuotasPorVencer" style="margin-top:5px">
+                            <div id="alertaNoHayCreditos" class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <strong>Alerta!</strong> No se encontraron más cuotas para este crédito.
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </div>
+
+
                         <table style="font-size:10pt" id="tablaCuotas" class="table table-sm table-hover table-bordered">
                             <thead>
                                 <tr>
@@ -326,6 +342,8 @@
                         fecha: new Date(),
                         loaderCreditos: false,
                         CreditosNoEncontrados: false,
+                        loaderCuotasPorVencer: false,
+                        alertCuotasPorVencer: false,
                         CheckedAll: false,
                         estados: [
                             1,2
@@ -549,6 +567,63 @@
                                 });
                             else
                                 vm.checkedCreditos = [];
+                        },
+                        BuscarCuotasPorVencer: async function () {
+                            let codigoFondeador = vm.credito.codigoFondeador;
+
+                            let desde = $("#desde").val();
+                            let hasta = $("#hasta").val();
+
+                            var formData = new FormData();
+                            formData.append('pagosDesde', desde);
+                            formData.append('pagosHasta', hasta);
+                            formData.append('codigoFondeador', codigoFondeador);
+
+                            this.loaderCuotasPorVencer = true;
+
+                            let cuotas = await fetch(this.api + "Cuotas/GetCuotasPorVencer", {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => response.json());
+
+                            this.loaderCuotasPorVencer = false;
+
+                            if (cuotas.length == 0) {
+                                this.alertCuotasPorVencer = true;
+                                return;
+                            }
+
+                            cuotas.forEach(x => {
+                                x.saldo = x.nCuotaMensual - x.pagado;
+                                x.aPagar = 0;
+                            });
+
+                            this.creditos.find(x=>x.codigoFondeador == codigoFondeador).cuotas
+
+                            console.log(cuotas);
+                            
+                            cuotas.forEach(c => {
+                                vm.cuotas.push(c);
+                                vm.creditos.find(x => x.codigoFondeador == vm.credito.codigoFondeador).cuotas.push(c);
+                                vm.creditos.find(x => x.codigoFondeador == codigoFondeador).disponible = null ? vm.cuotas.filter(z => z.codigoFondeador == codigoFondeador).map(d => d.saldo).reduce((a, b) => parseFloat(a) + parseFloat(b)) : vm.cuotas.filter(z => z.codigoFondeador == codigoFondeador).map(x => x.disponible)[0]
+                            });
+
+
+                            this.creditos.forEach(c => {
+                                let d = c.disponible;
+                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                    if (d >= cu.saldo) {
+                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                        d = d - cu.saldo;
+                                    }
+                                    else {
+                                        cu.aPagar = parseFloat(d.toFixed(2));
+                                        d = 0;
+                                    }
+                                });
+                            });
+                            
                         }
                     },
                     computed: {
@@ -589,6 +664,9 @@
 
                         $('#alertaNoHayCreditos').on('closed.bs.alert', function () {
                             this.CreditosNoEncontrados = false;
+                        })
+                        $('#alertCuotasPorVencer').on('closed.bs.alert', function () {
+                            this.alertCuotasPorVencer = false;
                         })
 
 
