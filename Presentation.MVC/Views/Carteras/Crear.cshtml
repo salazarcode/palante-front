@@ -48,6 +48,7 @@
                                     <tr>
                                         <th>COF</th>
                                         <th>ORION</th>
+                                        <th>CODFOND</th>
                                         <th>Capital</th>
                                         <th>Precio</th>
                                         <th>Cuotas</th>
@@ -61,8 +62,9 @@
                                         :id="credito.nCodCred">
                                         <td>{{credito.nCodCred}}</td>
                                         <td>{{credito.ccodcta.trim()}}</td>
+                                        <td>{{credito.codigoFondeador}}</td>
                                         <td>{{Moneda(credito.nMoneda) + ' ' + credito.nPrestamo.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
-                                        <td>{{Moneda(credito.nMoneda) + ' ' + credito.precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}}</td>
+                                        <td>{{Moneda(credito.nMoneda) + ' ' + (credito.precio != null ? credito.precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0)}}</td>
                                         <td>{{credito.nNroCuotas}}</td>
                                         <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
@@ -146,8 +148,9 @@
                             <table style="margin-top:20px" v-if="!busquedaSinResultado && !busquedaLoader" class="table table-sm table-bordered table-hover" id="tableBusqueda">
                                 <thead>
                                     <tr>
+                                        <th>Check</th>
                                         <th>Nro.</th>
-                                        <th>Nro.</th>
+                                        <th>CODFOND</th>
                                         <th>Moneda</th>
                                         <th>Capital</th>
                                         <th>Precio</th>
@@ -164,15 +167,15 @@
                                         :id="credito.nCodCred"
                                         @@click="Seleccionar($event, credito, 1)">
                                         <td>
-                                            <input 
-                                                   type="checkbox"                                                  
+                                            <input type="checkbox"
                                                    class="form-control"
                                                    :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)">
                                         </td>
                                         <td>{{credito.nCodCred}}</td>
+                                        <td>{{credito.codigoFondeador}}</td>
                                         <td>{{Moneda(credito.nMoneda)}}</td>
                                         <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{credito.precio}}</td>
+                                        <td>{{credito.precio != null ? formatMoney(credito.precio) : 0}}</td>
                                         <td>{{credito.nNroCuotas}}</td>
                                         <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.producto.cNomCod}}</td>
@@ -432,6 +435,7 @@
                         Creditos: this.seleccionados.map(x => x.nCodCred).join(','),
                         ProductoID: this.producto,
                         Creado: this.creado,
+                        CreadoPor: JSON.parse(localStorage.getItem("usuario")).nombre,
                         esrepro: this.repro == 0 ? false : true
                     };
 
@@ -441,6 +445,7 @@
                     formData.append('Creditos', cartera.Creditos);
                     formData.append('ProductoID', cartera.ProductoID);
                     formData.append('Creado', cartera.Creado);
+                    formData.append('CreadoPor', cartera.CreadoPor);
                     formData.append('esrepro', cartera.esrepro);
 
                     let res = await fetch(this.api + "Carteras/Save", {
@@ -520,13 +525,14 @@
                     var formData = new FormData();
                     formData.append('Query', this.busquedaItems.join(","));
                     formData.append('Fecha', this.creado);
+                    formData.append('EnFondeador', false);
 
                     let res = await fetch(this.api + "Creditos/Search", {
                         method: 'POST',
                         body: formData
                     })
                         .then(response => response.json());
-
+                    console.log(res);
 
                     if (res.length == 0) {
                         this.pantallaBusqueda = 2;
@@ -579,7 +585,7 @@
                     }
                 },
                 formatMoney: function (num) {
-                    return num.toFixed(2)
+                    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                 },
                 fecha: function (date) {
                     return moment(date).format("DD/MM/YYYY")

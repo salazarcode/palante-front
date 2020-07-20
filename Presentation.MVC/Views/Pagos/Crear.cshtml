@@ -9,32 +9,232 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-md-12" style="max-height:400px;overflow-y:auto">
+                <div class="col-md-1">
+                    <p><b>Fondeador:</b></p>
+                    <div class="form-check" v-for="(fondeador, index) in fondeadores">
+                        <input class="form-check-input" type="radio" :id="'fondeador'+index" :value="fondeador.fondeadorID" @@change="Filtrar" v-model="f">
+                        <label class="form-check-label" :for="'fondeador'+index">
+                            {{fondeador.nombre}}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <p><b>Producto:</b></p>
+                    <div class="form-check" v-for="(producto,index) in productos">
+                        <input class="form-check-input" type="radio" :id="'producto'+index" :value="producto.nValor" @@change="Filtrar" v-model="p">
+                        <label class="form-check-label" :for="'producto'+index">
+                            {{producto.cNomCod}}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <p><b>Disponible:</b></p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="condisponible" id="disponiblesi" :value="true" v-model="condisponible" @@change="Filtrar" checked>
+                        <label class="form-check-label" for="disponiblesi">
+                            Sí
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="condisponible" id="disponibleno" :value="false" v-model="condisponible" @@change="Filtrar">
+                        <label class="form-check-label" for="disponibleno">
+                            No
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <p><b>Mochila:</b></p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mochila" id="mochilasi" :value="true" v-model="mochila" @@change="Filtrar">
+                        <label class="form-check-label" for="mochilasi">
+                            Sí
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="mochila" id="mochilano" :value="false" v-model="mochila" @@change="Filtrar">
+                        <label class="form-check-label" for="mochilano">
+                            No
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <b>Estados:</b>
+                    <br />
+                    <input type="checkbox" id="jack" value="1" v-model="estados" @@change="changeEstado">
+                    <label for="jack">Vigente</label>
+                    <br />
+                    <input type="checkbox" id="john" value="2" v-model="estados" @@change="changeEstado">
+                    <label for="john">Vencido</label>
+                    <br />
+                    <input type="checkbox" id="mike" value="3" v-model="estados" @@change="changeEstado">
+                    <label for="mike">Por Vencer</label>
+                </div>
+                <div class="col-md-4">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <input style="margin-top:8px"
+                                   type="text"
+                                   class="form-control"
+                                   id="query"
+                                   v-model="query"
+                                   placeholder="Buscar..."
+                                   @@keyup.enter="Buscar" />
+                        </div>
+                        <div class="col-md-3">
+                            <button style="margin-top:8px;width:100%" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="desde"><b>Disponible desde:</b></label>
+                            <input type="date" class="form-control" id="desde" value="" @@change="FiltrarFecha" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hasta"><b>Disponible hasta:</b></label>
+                            <input type="date" class="form-control" id="hasta" value="" @@change="FiltrarFecha" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button class="btn btn-primary" style="width:100%" @@click="guardar">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <div id="accordion">
-                        <div class="card" v-for="credito in creditos">
-                            <div class="card-header" id="headingOne">
-                                <h5 class="mb-0">
-                                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        {{credito.nCodCred}} - {{credito.dni}} - {{credito.ruc}} - {{credito.nombres}} - {{credito.razonSocial}}
-                                    </button>
-                                </h5>
-                            </div>
+            <hr style="margin-top:10px;margin-bottom:10px" />
 
-                            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                                <div class="card-body">
-                                    <ul>
-                                        <li
-                                            v-for="cuota in credito.cuotasVencidasVigentes"                                            
-                                            >
-                                            Nro.: {{cuota.nCuota}}, Monto: {{cuota.nCuotaMensual}}
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+
+            <div class="row">
+                <div class="col-md-6" style="max-height:350px;overflow-y:auto">
+
+                    <div v-if="loaderCreditos"
+                         style="border:dashed 3px gray; height:350px;width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
+                        <p>
+                            <img src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
+                            <b>Cargando cuotas por crédito... </b>
+                        </p>
+                    </div>
+
+                    <div v-if="CreditosNoEncontrados">
+                        <div id="alertaNoHayCreditos" class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <strong>Alerta!</strong> No se encontraron créditos para estos filtros.
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     </div>
 
+                    <div v-if="encontrados.length != 0">
+                        <p>Resultado de búsqueda. <a href="#" @@click="encontrados = []">Limpiar búsqueda</a></p>
+                        <table id="tablaCreditos" style="font-size:10pt" class="table table-success table-sm table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Check</th>
+                                    <th scope="col">CodigoFondeador</th>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Cuotas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="credito in encontrados" style="cursor:pointer;" @@click="verCuotas($event, credito)">
+                                    <th scope="row">
+                                        <input type="checkbox"
+                                               :value="credito.codigoFondeador"
+                                               v-model="checkedCreditos">
+                                    </th>
+                                    <th>{{credito.codigoFondeador}}</th>
+                                    <th>{{credito.id || ''}}</th>
+                                    <th>{{credito.nombre || ''}}</th>
+                                    <td>{{credito.cuotas.length}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                    <table v-if="creditosFiltrados.length != 0" id="tablaCreditos" style="font-size:10pt" class="table table-sm table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <input type="checkbox"
+                                           id="CheckAll"
+                                           @@click="CheckAll"
+                                           v-model="CheckedAll"
+                                           >
+                                </th>
+                                <th scope="col">CodigoFondeador</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Cuotas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="credito in creditosFiltrados" style="cursor:pointer;" @@click="verCuotas($event, credito)">
+                                <th scope="row">
+                                    <input type="checkbox"
+                                           :value="credito.codigoFondeador"
+                                           v-model="checkedCreditos">
+                                </th>
+                                <th scope="row">{{credito.codigoFondeador}}</th>
+                                <th scope="row">{{credito.id || ''}}</th>
+                                <th>{{credito.nombre || ''}}</th>
+                                <td>{{credito.cuotas.length}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+
+                </div>
+                <div class="col-md-6" style="max-height:350px;overflow-y:auto">
+
+                    <div v-if="credito == ''"
+                         style="border:dashed 3px gray; height:350px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
+                        <p>
+                            <b>Selecciona un crédito para ver su detalle.</b>
+                        </p>
+                    </div>
+
+                    <div v-if="credito != ''">
+                        <p>Disponible: <b>{{formatMoney(credito.disponible)}}</b></p>
+                        <table style="font-size:10pt" id="tablaCuotas" class="table table-sm table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">NroCuota</th>
+                                    <th scope="col">Fec.Vcto.</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Edo. Pago</th>
+                                    <th scope="col">Monto</th>
+                                    <th scope="col">Pagado</th>
+                                    <th scope="col">Saldo</th>
+                                    <th scope="col">A pagar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="cuota in cuotas.filter(x=>x.codigoFondeador == credito.codigoFondeador)"
+                                    :class="{'table-danger': cuota.nEstadoCuota == 2, 'table-primary': cuota.nEstadoCuota == 1 }">
+                                    <th scope="row">{{cuota.nNroCuota}}</th>
+                                    <th>{{GetDate(cuota.dFecVcto)}}</th>
+                                    <td>{{NEstadoCuota(cuota.nEstadoCuota)}}</td>
+                                    <td>{{NEstado(cuota.nEstado)}}</td>
+                                    <td>{{formatMoney(cuota.nCuotaMensual)}}</td>
+                                    <td>{{formatMoney(cuota.pagado)}}</td>
+                                    <td>{{formatMoney(cuota.saldo)}}</td>
+                                    <td>
+                                        <input type="text"
+                                               class="form-control"
+                                               name="name"
+                                               style="font-size:10pt;max-width:100px"
+                                               :value="cuota.aPagar"
+                                               @@keyup="changeAPagar(cuota.codigoFondeador, cuota.nNroCuota, $event)" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                 </div>
             </div>
@@ -80,36 +280,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="modal fade" id="modalDetalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <table class="table table-hover table-bordered table-sm">
-                                <tr>
-                                    <td>NroCuota</td>
-                                    <td>Monto</td>
-                                    <td>Vencimiento</td>
-                                </tr>
-                                <tr v-for="cuota in creditoDetallado.cuotas" :class="{'table-primary': vigente(cuota.vencimiento)}">
-                                    <td>{{cuota.cuota}}</td>
-                                    <td>{{cuota.monto}}</td>
-                                    <td>{{formatDate(cuota.vencimiento)}}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         @section Scripts{
@@ -118,7 +288,9 @@
                 var vm = new Vue({
                     el: '#app',
                     data: {
+                        checkedCreditos: [],
                         cuotas: [],
+                        mochila:false,
                         loaderCuotas: false,
                         loaderFondeador: false,
                         loaderProducto: false,
@@ -127,9 +299,9 @@
                         api: "",
                         domain:"",
                         pagos: [],
-                        f: 0,
+                        f: 1,
                         mensaje: "",
-                        p: 0,
+                        p: 2,
                         total: 0,
                         mensajeFondeadorProducto: "Debes seleccionar Fondeador y Producto antes de seleccionar",
                         pago: {
@@ -144,85 +316,76 @@
                         detalle: "",
                         seleccionadoTodo: "",
                         creditoDetallado: "",
-                        creditos: []
+                        creditos: [],
+                        creditosFiltrados: [],
+                        credito: "",
+                        concof: false,
+                        query: "",
+                        encontrados: [],
+                        condisponible: true,
+                        fecha: new Date(),
+                        loaderCreditos: false,
+                        CreditosNoEncontrados: false,
+                        CheckedAll: false,
+                        estados: [
+                            1,2
+                        ]
                     },
                     methods: {
-                        changeAPagar: function (index) {
-                            let c = this.cuotasFiltradas[index];
-
-                            c.cuentaPorCobrar = c.aPagar < c.disponible ? 0 : c.aPagar - c.disponible;
-
-                            this.cuotasFiltradas[index].cuentaPorCobrar = c.cuentaPorCobrar;
+                        verCuotas: function (event, credito) {
+                            $(event.target).parent("tr").siblings().removeClass("table-primary");
+                            $(event.target).parent("tr").addClass("table-primary");
+                            this.credito = credito;
                         },
-                        filter: function () {
-                            if (this.f != 0 && this.p != 0) {
-                                this.cuotasFiltradas = [];
-                                this.cuotas.filter(x => x.nSubProd == vm.p && x.fondeadorID == vm.f)
-                                    .forEach(e => vm.cuotasFiltradas.push(e));
+                        changeAPagar: function (codigo, cuota, evento) {
+                            let valor = $(evento.target).val();
+                            let suma = this.creditos
+                                .find(x => x.codigoFondeador == codigo)
+                                .cuotas.filter(y => y.codigoFondeador == codigo && y.nNroCuota != cuota)
+                                .map(z => z.aPagar)
+                                .reduce((a, b) => parseFloat(a) + parseFloat(b)) + parseFloat(valor);
+
+                            if (suma > this.creditos.find(y => y.codigoFondeador == codigo).disponible) {
+                                event.target.value = this.cuotas.find(y => y.codigoFondeador == codigo && y.nNroCuota == cuota).aPagar;
+                                this.mensaje = "El monto suma en total, una cantidad mayor al disponible por este crédito.";
+                                $("#modalMensaje").modal("show");
                             }
+                            else {
+                                this.cuotas.find(y => y.codigoFondeador == codigo && y.nNroCuota == cuota).aPagar = valor;
+                            }
+
+
                         },
-                        DetalleCredito: function (credito) {
-                            //Busco detalle del crédito
-                            this.creditoDetallado = {
-                                nCodCred: credito,
-                                cuotas: [
-                                    {
-                                        cuota: 1,
-                                        monto: 123.21,
-                                        vencimiento: new Date()
-                                    },
-                                    {
-                                        cuota: 2,
-                                        monto: 123.21,
-                                        vencimiento: new Date(2020, 5, 27)
-                                    },
-                                    {
-                                        cuota: 3,
-                                        monto: 123.21,
-                                        vencimiento: new Date(2020, 6, 27)
-                                    }
-                                ]
-                            };
-                            $("#modalDetalle").modal("show");
+                        FiltrarFecha: async function () {
+
+                            await this.mainSearch();
                         },
-                        CubrirDeficit: function () {
-                            if (this.f == 0 || this.p == 0) {
-                                this.mensaje = this.mensajeFondeadorProducto;
+                        changeEstado: async function () {
+
+                            await this.mainSearch();
+                        },
+                        Buscar: function () {
+                            this.encontrados = [];
+                            var search = new RegExp(this.query.trim().toUpperCase(), 'i');
+                            var res = this.cuotas.find(x => search.test(x.codigoFondeador) || search.test(x.nombre) || search.test(x.id));
+
+                            if (res == undefined) {
+                                this.mensaje = "No se hallaron resultados";
                                 $("#modalMensaje").modal("show");
                                 return;
                             }
-                            this.cuotasFiltradas.filter(x => x.disponible < x.monto && x.selected == true).forEach(x => {
-                                if (x.disponible < x.monto)
-                                    x.cuentaPorCobrar = x.monto - x.disponible;
-                            });
-                            this.sumatoria();
-                        },
 
+                            let elems = this.creditosFiltrados.filter(z => res.codigoFondeador == z.codigoFondeador && res.fondeador == vm.f && res.producto == vm.p);
+
+                            if (elems.length == 0) {
+                                this.mensaje = "El resultado hallado no pertenece a este fondeador, producto o " + (vm.condisponible ? "no tiene monto disponible" : "tiene disponible");
+                                $("#modalMensaje").modal("show");
+                                return;
+                            }
+                            this.encontrados = elems
+                        },
                         formatMoney: function (num) {
-                            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                        },
-                        seleccionarTodo: function () {
-                            if (this.f == 0 || this.p == 0) {
-                                this.mensaje = this.mensajeFondeadorProducto;
-                                $("#modalMensaje").modal("show");
-                                return;
-                            }
-                            this.seleccionadoTodo = !this.seleccionadoTodo;
-                            this.cuotasFiltradas.forEach(x => {
-                                x.selected = vm.seleccionadoTodo;
-                            });
-                            this.sumatoria();
-                        },
-                        seleccionar: function (event, index) {
-                            if (this.f == '' || this.p == 0) {
-                                this.mensaje = this.mensajeFondeadorProducto;
-                                $("#modalMensaje").modal("show");
-                                return;
-                            }
-                            if (event.target.tagName != 'A') {
-                                this.cuotasFiltradas[index].selected = !this.cuotasFiltradas[index].selected;
-                                this.sumatoria();
-                            }
+                            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                         },
                         GetDate: function (strDate) {
                             return moment(strDate).format("DD-MM-YYYY");
@@ -241,18 +404,21 @@
                             return moment(fecha).format("DD/MM/YYYY");
                         },
                         guardar: async function () {
-                            var aux = this.cuotasFiltradas.filter(x => x.selected == true);
+                            var aux = vm.cuotas
+                                .filter(x => vm.creditosFiltrados
+                                    .filter(e => vm.checkedCreditos.includes(e.codigoFondeador))
+                                    .map(c => c.codigoFondeador)
+                                    .includes(x.codigoFondeador) && x.aPagar != 0 && x.aPagar != '');
                             var pagos = aux.map(x => {
                                 var joined = [];
-                                joined.push(x.nCodCred);
-                                joined.push(x.nNroCalendario);
+                                joined.push(x.codigoFondeador);
                                 joined.push(x.nNroCuota);
                                 joined.push(parseFloat(x.aPagar));
                                 joined.push(false)
 
                                 return joined.join(",")
                             });
-
+                            /*
                             var deudas = aux.filter(e => e.cuentaPorCobrar != 0).map(x => {
                                 var joined = [];
                                 joined.push(x.nCodCred);
@@ -263,25 +429,126 @@
 
                                 return joined.join(",")
                             });
+                            */
 
                             var detalles = pagos;
-                            deudas.forEach(x => detalles.push(x));
+                            //deudas.forEach(x => detalles.push(x));
 
                             var formData = new FormData();
                             formData.append('pagoID', 0);
-                            formData.append('FondeadorID', this.f == 'COOPAC' ? 1 : 2);
-                            formData.append('ProductoID', this.p);
-                            formData.append('Creador', 'krobles');
+                            formData.append('FondeadorID', vm.f);
+                            formData.append('ProductoID', vm.p);
+                            formData.append('Creador', JSON.parse(localStorage.getItem("usuario")).nombre);
                             formData.append('Pagos', detalles.join(";"));
 
                             let res = await fetch(this.api + "Pagos/Save", {
                                 method: 'POST',
                                 body: formData
                             }).then(response => response.json());
+
                             window.location.href = '@(ViewBag.domain+"Pagos")';
                         },
                         random: function (min, max) {
                             return Math.floor(Math.random() * max) + min;
+                        },
+                        NEstadoCuota: function (estadoCuota) {
+                            switch (estadoCuota) {
+                                case 1:
+                                    return "Vigente";
+                                case 2:
+                                    return "Vencido";
+                                case 3:
+                                    return "Por Vencer";
+                            }
+                        },
+                        NEstado: function (estadoCuota) {
+                            switch (estadoCuota) {
+                                case 0:
+                                    return "Sin Pagar";
+                                case 2:
+                                    return "Pagada";
+                            }
+                        },
+                        Filtrar: function () {
+                            if (this.mochila) {
+                                this.creditosFiltrados = this.condisponible ? this.creditos.filter(x => x.disponible != 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id == null) : this.creditos.filter(x => x.disponible == 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id == null);
+
+                            }
+                            else {
+                                this.creditosFiltrados = this.condisponible ? this.creditos.filter(x => x.disponible != 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id != null) : this.creditos.filter(x => x.disponible == 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id != null);
+                            }
+                            if (this.creditosFiltrados.length == 0)
+                                this.CreditosNoEncontrados = true;
+                            else
+                                this.CreditosNoEncontrados = false;
+                            
+                        },
+                        mainSearch: async function () {
+                            let desde = $("#desde").val();
+                            let hasta = $("#hasta").val();
+                            let estados = this.estados.join(",");
+                            this.cuotas = [];
+                            this.creditos = [];
+                            this.creditosFiltrados = [];
+                            this.credito = ""
+
+                            var formData = new FormData();
+                            formData.append('pagosDesde', desde);
+                            formData.append('pagosHasta', hasta);
+                            formData.append('nEstadoCuota', estados);
+
+                            this.loaderCreditos = true;
+                            let creditosRes = await fetch(this.api + "Cuotas/GetCuotas", {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => response.json());
+
+                            vm.cuotas = creditosRes;
+
+                            vm.cuotas.forEach(x => {
+                                x.saldo = x.nCuotaMensual - x.pagado;
+                                x.aPagar = 0;
+                            });
+
+                            [... new Set(vm.cuotas.map(a => a.codigoFondeador))].forEach(b => {
+                                let elem = vm.cuotas.find(x => x.codigoFondeador == b);
+                                vm.creditos.push({
+                                    codigoFondeador: elem.codigoFondeador,
+                                    id: elem.id,
+                                    nombre: elem.nombre,
+                                    cuotas: vm.cuotas.filter(z => z.codigoFondeador == b),
+                                    disponible: elem.id == null ? vm.cuotas.filter(z => z.codigoFondeador == b).map(d=>d.saldo).reduce((a,b)=>parseFloat(a)+parseFloat(b)) :  vm.cuotas.filter(z => z.codigoFondeador == b).map(x => x.disponible)[0],
+                                    producto: vm.cuotas.filter(z => z.codigoFondeador == b)[0].producto,
+                                    fondeador: vm.cuotas.filter(z => z.codigoFondeador == b)[0].fondeador
+                                });
+                            });
+
+                            this.creditos.forEach(c => {
+                                let d = c.disponible;
+                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                    if (d >= cu.saldo) {
+                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                        d = d - cu.saldo;
+                                    }
+                                    else {
+                                        cu.aPagar = parseFloat(d.toFixed(2));
+                                        d = 0;
+                                    }
+                                });
+                            });      
+
+                            this.loaderCreditos = false;
+
+                            this.Filtrar();
+                        },
+                        CheckAll: function () {
+                            if (!this.CheckedAll)
+                                this.creditosFiltrados.map(x => x.codigoFondeador).forEach(e => {
+                                    vm.checkedCreditos.push(e);
+                                });
+                            else
+                                vm.checkedCreditos = [];
                         }
                     },
                     computed: {
@@ -297,20 +564,12 @@
                         this.api = $("#endpoint").val();
                         this.domain = $("#domain").val();
 
+                        $("#desde").val(moment().subtract(1, 'months').format("YYYY-MM-DD"));
+                        $("#hasta").val(moment().format("YYYY-MM-DD"));
                         this.loaderCuotas = true;
 
                         this.loaderFondeador = true;
                         this.loaderProducto = true;
-                        var formData = new FormData();
-                        formData.append('nEstadoCuota', "1,2");
-                        formData.append('nEstado', "0");
-
-                        this.creditos = await fetch(this.api + "Cuotas/PorEstados", {
-                            method: 'POST',
-                            body: formData
-                        })
-                            .then(response => response.json());
-
 
                         fetch(this.api + "Fondeador/All")
                             .then(x => x.json())
@@ -325,6 +584,14 @@
                                 vm.productos = res;
                                 vm.loaderProducto = false;
                             });
+
+                        this.mainSearch();
+
+                        $('#alertaNoHayCreditos').on('closed.bs.alert', function () {
+                            this.CreditosNoEncontrados = false;
+                        })
+
+
                     }
                 });
 

@@ -9,13 +9,16 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-10">
+        <div class="col-md-12">
             <table class="table table-hover table-bordered table-sm" style="margin-top:20px">
                 <thead>
                     <tr>
                         <th>PagoID</th>
+                        <th>Creador</th>
                         <th>Fondeador</th>
                         <th>Producto</th>
+                        <th>Creditos</th>
+                        <th>Monto</th>
                         <th>Fecha Creación</th>
                         <th>Última Modificación</th>
                         <th>Fecha confirmación</th>
@@ -29,8 +32,11 @@
                 <tbody>
                     <tr v-for="(r, index) in pagos" :class="r.confirmed ? 'table-primary' : 'tr'">
                         <td>{{r.pagoID}}</td>
+                        <td>{{r.creadoPor}}</td>
                         <td>{{r.fondeador.nombre}}</td>
                         <td>{{r.producto.cNomCod}}</td>
+                        <td>{{distinct(r.detalles, 'codigoFondeador').length}}</td>
+                        <td>{{formatMoney(r.detalles.map(x=>x.monto).reduce((a,b)=>parseFloat(a)+parseFloat(b)))}}</td>
                         <td>{{GetDate(r.creado)}}</td>
                         <td>{{GetDate(r.modificado)}}</td>
                         <td>{{r.fechaCierre == '0001-01-01T00:00:00' ? "No Cerrada" : GetDate(r.fechaCierre)}}</td>
@@ -121,7 +127,7 @@
 
 
     <div class="modal fade" id="detalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="exampleModalLabel">Detalles de pago {{detalle.pagoID}}</h5>
@@ -130,12 +136,28 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <b>Resumen:</b>
+                    <table v-if="detalle!=''" class="table table-hover table-bordered table-sm" style="font-size:10pt" id="data">
+                        <thead>
+                            <tr>
+                                <th>Crédito</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(f, index) in distinct(detalle.detalles, 'codigoFondeador')">
+                                <td>{{f}}</td>
+                                <td>{{formatMoney(detalle.detalles.filter(a=>a.codigoFondeador==f).map(x=>x.monto).reduce((a,b)=>parseFloat(a)+parseFloat(b)))}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br />
+                    <b>Detalle:</b>
                     <table class="table table-hover table-bordered table-sm" style="font-size:10pt" id="data">
                         <thead>
                             <tr>
-                                <th>CreditoID</th>
+                                <th>CodigoFondeador</th>
                                 <th>Cuota</th>
-                                <th>Calendario</th>
                                 <th>Monto</th>
                                 <th>Concepto</th>
                                 <th>EsDeuda</th>
@@ -143,9 +165,8 @@
                         </thead>
                         <tbody>
                             <tr v-for="(c, index) in detalle.detalles" :class="{'table-danger':c.esDeuda == 1}">
-                                <td>{{c.nCodCred}}</td>
+                                <td>{{c.codigoFondeador}}</td>
                                 <td>{{c.nNroCuota}}</td>
-                                <td>{{c.nNroCalendario}}</td>
                                 <td>{{c.monto.toFixed(2)}}</td>
                                 <td>{{c.pagoConcepto != null ? c.pagoConcepto.nombre.toUpperCase() : ''}}</td>
                                 <td>{{c.esDeuda == 1 ? 'Deuda' : 'Pago'}}</td>
@@ -155,7 +176,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" @@click="doit(detalle, 'xlsx')">Excel</button>
                 </div>
             </div>
         </div>
@@ -193,6 +213,9 @@
                 GetDate: function (strDate) {
                     return moment(strDate, "YYYYMMDD").format("DD-MM-YYYY");
                 },
+                formatMoney: function (num) {
+                    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                },
                 confirmar: async function (index) {
                     if (this.pagos[index].fechaCierre == '0001-01-01T00:00:00') {
                         await fetch(this.api + "Pagos/Confirmar?pagoID=" + vm.pagos[index].pagoID);
@@ -228,6 +251,10 @@
                     return dl ?
                         XLSX.write(wb, { bookType: type, bookSST: true, type: 'base64' }) :
                         XLSX.writeFile(wb, fn || ('pago' + pago.pagoID + '.' + (type || 'xlsx')));
+                },
+                distinct: function (array, field) {
+                    let fields = [... new Set(array.map(a => a[field]))];
+                    return fields;                    
                 }
             },
             computed: {

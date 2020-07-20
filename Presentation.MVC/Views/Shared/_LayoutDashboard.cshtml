@@ -26,6 +26,42 @@
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
     <link href='~/js/FullCalendar/core/main.css' rel='stylesheet' />
     <link href='~/js/FullCalendar/daygrid/main.css' rel='stylesheet' />
+
+    <!-- jQuery -->
+    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+
+    <script src='~/js/FullCalendar/core/main.js'></script>
+    <script src='~/js/FullCalendar/daygrid/main.js'></script>
+    <script src='~/js/FullCalendar/bundle/locales-all.min.js'></script>
+    <script lang="javascript" src="~/js/excel/shim.min.js"></script>
+    <script lang="javascript" src="~/js/excel/xlsx.full.min.js"></script>
+    <script lang="javascript" src="~/js/excel/Blob.js"></script>
+    <script lang="javascript" src="~/js/excel/FileSaver.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- daterangepicker -->
+    <script src="~/plugins/moment/moment.min.js"></script>
+    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="~/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <!-- Summernote -->
+    <script src="~/plugins/summernote/summernote-bs4.min.js"></script>
+    <!-- overlayScrollbars -->
+    <script src="~/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="~/js/adminlte.js"></script>
+    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+    <script src="~/js/pages/dashboard.js"></script>
+    <!-- AdminLTE for demo purposes -->
+    <script src="~/js/demo.js"></script>
+
+    <script src="~/js/vue.js"></script>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
@@ -73,7 +109,7 @@
                     <nav class="mt-2">
                         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                             <!-- Add icons to the links using the .nav-icon class
-            with font-awesome or any other icon font library -->
+                            with font-awesome or any other icon font library -->
                             <li class="nav-item has-treeview">
                                 <a href="#" class="nav-link active">
                                     <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -165,41 +201,7 @@
 
     </div>
     <!-- ./wrapper -->
-    <!-- jQuery -->
-    <script src="~/plugins/jquery/jquery.min.js"></script>
-    <!-- jQuery UI 1.11.4 -->
-    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
-    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-    <script>
-        $.widget.bridge('uibutton', $.ui.button)
-    </script>
 
-    <script src='~/js/FullCalendar/core/main.js'></script>
-    <script src='~/js/FullCalendar/daygrid/main.js'></script>
-    <script src='~/js/FullCalendar/bundle/locales-all.min.js'></script>
-    <script lang="javascript" src="~/js/excel/shim.min.js"></script>
-    <script lang="javascript" src="~/js/excel/xlsx.full.min.js"></script>
-    <script lang="javascript" src="~/js/excel/Blob.js"></script>
-    <script lang="javascript" src="~/js/excel/FileSaver.js"></script>
-    <!-- Bootstrap 4 -->
-    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <!-- daterangepicker -->
-    <script src="~/plugins/moment/moment.min.js"></script>
-    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
-    <!-- Tempusdominus Bootstrap 4 -->
-    <script src="~/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
-    <!-- Summernote -->
-    <script src="~/plugins/summernote/summernote-bs4.min.js"></script>
-    <!-- overlayScrollbars -->
-    <script src="~/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
-    <!-- AdminLTE App -->
-    <script src="~/js/adminlte.js"></script>
-    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-    <script src="~/js/pages/dashboard.js"></script>
-    <!-- AdminLTE for demo purposes -->
-    <script src="~/js/demo.js"></script>
-
-    <script src="~/js/vue.js"></script>
     <script>
 
         var vm0 = new Vue({
