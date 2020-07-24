@@ -195,71 +195,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingFour">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                                    Deuda con Palante
-                                                </button>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>PagoID</th>
-                                                        <th>Crédito</th>
-                                                        <th>Calendario</th>
-                                                        <th>Cuota</th>
-                                                        <th>Monto</th>
-                                                    </tr>
-                                                    <tr v-for="elem in deudaDetalle">
-                                                        <td>{{elem.pagoID}}</td>
-                                                        <td>{{elem.nCodCred}}</td>
-                                                        <td>{{elem.nNroCalendario}}</td>
-                                                        <td>{{elem.nNroCuota}}</td>
-                                                        <td>{{formatMoney(elem.monto)}}</td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <div class="row float-left">
-                            <div class="col">
-                                <label for="total">Deuda Total</label>
-                                <input type="text" id="deuda" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="modal fade" id="confirmarGuardar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Confirmas que deseas guardar la recompra de total <b>{{total}}</b>, integrada por los créditos: </p>
-                        <ul>
-                            <li v-for="c in creditosFiltrados.filter(x=>x.selected)"><b>ID:</b> {{c.nCodCred}} - <b>Monto:</b> {{c.nPrestamo.toFixed(2)}}</li>
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
                     </div>
                 </div>
             </div>
@@ -326,111 +267,6 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-
-
-        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Búsqueda</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="parametros" v-if="pantallaBusqueda == 0">
-                            <div class="row">
-                                <div clss="col-md-12">
-                                    <label for="creado">Fecha corte:</label>
-                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
-                                    <br />
-
-                                    <label for="creado">IDs, DNIs o RUCs:</label>
-                                    <input type="text"
-                                           name="busqueda"
-                                           id="busqueda"
-                                           v-model="busqueda"
-                                           style="width:100%"
-                                           placeholder="Escribe un item y presiona enter"
-                                           @@keyup.enter="agregarItem"
-                                           class="form-control" />
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <br />
-                                    <p>Elementos: <span class="badge badge-light">{{busquedaItems.length != 0 ? busquedaItems.length : 'Agrega items a la búsqueda'}}</span></p>
-
-                                    <div class="list-group">
-                                        <a href="#"
-                                           v-for="(item,index) in busquedaItems"
-                                           @@click="eliminarItem(index)"
-                                           class="list-group-item list-group-item-action">
-                                            {{item}}
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="Cargando" v-if="pantallaBusqueda == 1">
-                            <img src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
-                        </div>
-                        <div id="resultado" v-if="pantallaBusqueda == 2">
-                            <br />
-                            <div v-if="busquedaSinResultado && !busquedaLoader" class="alert alert-warning" role="alert">
-                                No se encontraron resultados
-                            </div>
-                            <table style="margin-top:20px" v-if="!busquedaSinResultado && !busquedaLoader" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                <thead>
-                                    <tr>
-                                        <th>Nro.</th>
-                                        <th>Nro.</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Vcto.</th>
-                                        <th>Producto</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="main">
-                                    <tr v-for="credito in resBusqueda"
-                                        :class="{ 'table-primary': credito.selected }"
-                                        :id="credito.nCodCred"
-                                        @@click="Seleccionar(credito,1)">
-                                        <td>
-                                            <input type="checkbox"
-                                                   class="form-control"
-                                                   :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)">
-                                        </td>
-                                        <td>{{credito.nCodCred}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{credito.precio}}</td>
-                                        <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{fecha(credito.dFecVcto)}}</td>
-                                        <td>{{credito.producto.cNomCod}}</td>
-                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
-                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @@click="pantallaBusqueda = 0" v-if="pantallaBusqueda==2">Atras</button>
-                        <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
-                        <button class="btn btn-sm btn-success" @@click="buscar" v-if="pantallaBusqueda==0">Buscar</button>
                     </div>
                 </div>
             </div>
