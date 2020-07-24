@@ -57,15 +57,6 @@
                         </label>
                     </div>
                 </div>
-                <div class="col-md-1">
-                    <b>Estados:</b>
-                    <br />
-                    <input type="checkbox" id="jack" value="1" v-model="estados" @@change="changeEstado">
-                    <label for="jack">Vigente</label>
-                    <br />
-                    <input type="checkbox" id="john" value="2" v-model="estados" @@change="changeEstado">
-                    <label for="john">Vencido</label>
-                </div>
                 <div class="col-md-4">
                     <div class="row">
                         <div class="col-md-9">
@@ -92,10 +83,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <div class="row">
                         <div class="col-md-12">
-                            <button class="btn btn-primary" style="width:100%" @@click="guardar">Guardar</button>
+                            <button class="btn btn-primary" style="width:100%" @@click="guardar" :disabled="loaderCuotas">Guardar</button>
+                            <div v-if="loaderCuotas" style="margin-top:5px">
+                                <p>
+                                    <img src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
+                                    <b>Buscado Cuotas...</b>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -133,7 +130,7 @@
                                     <th scope="col">CodigoFondeador</th>
                                     <th scope="col">ID</th>
                                     <th scope="col">Nombre</th>
-                                    <th scope="col">Cuotas</th>
+                                    <th scope="col">Disponible</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,12 +138,13 @@
                                     <th scope="row">
                                         <input type="checkbox"
                                                :value="credito.codigoFondeador"
-                                               v-model="checkedCreditos">
+                                               v-model="checkedCreditos"
+                                               @@change="ChangeChecked">
                                     </th>
                                     <th>{{credito.codigoFondeador}}</th>
                                     <th>{{credito.id || ''}}</th>
-                                    <th>{{credito.nombre || ''}}</th>
-                                    <td>{{credito.cuotas.length}}</td>
+                                    <th>{{credito.nombres || ''}}</th>
+                                    <th>{{formatMoney(credito.disponible) || 0}}</th>
                                 </tr>
                             </tbody>
                         </table>
@@ -161,12 +159,12 @@
                                            id="CheckAll"
                                            @@click="CheckAll"
                                            v-model="CheckedAll"
-                                           >
+                                           @@change="ChangeChecked">
                                 </th>
                                 <th scope="col">CodigoFondeador</th>
                                 <th scope="col">ID</th>
                                 <th scope="col">Nombre</th>
-                                <th scope="col">Cuotas</th>
+                                <th scope="col">Disponible</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -178,8 +176,8 @@
                                 </th>
                                 <th scope="row">{{credito.codigoFondeador}}</th>
                                 <th scope="row">{{credito.id || ''}}</th>
-                                <th>{{credito.nombre || ''}}</th>
-                                <td>{{credito.cuotas.length}}</td>
+                                <th>{{credito.nombres || ''}}</th>
+                                <th>{{formatMoney(credito.disponible) || 0}}</th>
                             </tr>
                         </tbody>
                     </table>
@@ -196,25 +194,14 @@
                     </div>
 
                     <div v-if="credito != ''">
-                        <button class="btn btn-primary btn-sm float-right" @@click="BuscarCuotasPorVencer">Ver cuotas por vencer</button>
                         <p>Disponible: <b>{{formatMoney(credito.disponible)}}</b></p>
 
-                        <div v-if="loaderCuotasPorVencer" style="margin-top:5px">
+                        <div v-if="loaderCuotas" style="margin-top:5px">
                             <p>
                                 <img src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
-                                <b>Buscado Cuotas por vencer... </b>
+                                <b>Buscado Cuotas...</b>
                             </p>
                         </div>
-
-                        <div v-if="alertCuotasPorVencer" style="margin-top:5px">
-                            <div id="alertaNoHayCreditos" class="alert alert-warning alert-dismissible fade show" role="alert">
-                                <strong>Alerta!</strong> No se encontraron más cuotas para este crédito.
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        </div>
-
 
                         <table style="font-size:10pt" id="tablaCuotas" class="table table-sm table-hover table-bordered">
                             <thead>
@@ -342,7 +329,7 @@
                         fecha: new Date(),
                         loaderCreditos: false,
                         CreditosNoEncontrados: false,
-                        loaderCuotasPorVencer: false,
+                        loaderCuotas: false,
                         alertCuotasPorVencer: false,
                         CheckedAll: false,
                         estados: [
@@ -350,15 +337,97 @@
                         ]
                     },
                     methods: {
-                        verCuotas: function (event, credito) {
+                        ChangeChecked: async function () {
+                            let faltantes = []
+                            this.loaderCuotas = true;
+
+                            if (vm.cuotas.length == 0 && vm.checkedCreditos.length != 0)
+                                faltantes = vm.checkedCreditos
+                            else {
+                                vm.checkedCreditos.forEach(e => {
+                                    if (!vm.cuotas.map(a => a.codigoFondeador).includes(e)) {
+                                        faltantes.push(e);
+                                    }
+                                })
+                            }
+
+                            
+
+                            var formData = new FormData();
+                            formData.append('buscar', faltantes.join(','));
+
+                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                method: 'POST',
+                                body: formData
+                            }).then(x=>x.json())
+
+                            cuotasRes.forEach(x => {
+                                x.saldo = x.nCuotaMensual - x.pagado;
+                                x.aPagar = 0;
+                            });
+
+                            cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                            this.creditos.forEach(c => {
+                                let d = c.disponible;
+                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                    if (d >= cu.saldo) {
+                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                        d = d - cu.saldo;
+                                    }
+                                    else {
+                                        cu.aPagar = parseFloat(d.toFixed(2));
+                                        d = 0;
+                                    }
+                                });
+                            });
+                            this.loaderCuotas = false;
+                        },
+                        verCuotas: async function (event, credito) {
                             $(event.target).parent("tr").siblings().removeClass("table-primary");
                             $(event.target).parent("tr").addClass("table-primary");
+
+                            this.loaderCuotas = true;
+
+                            var formData = new FormData();
+                            formData.append('buscar', credito.codigoFondeador);
+
+                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                method: 'POST',
+                                body: formData
+                            }).then(x=>x.json());
+
+
+                            if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
+                                cuotasRes.forEach(x => {
+                                    x.saldo = x.nCuotaMensual - x.pagado;
+                                    x.aPagar = 0;
+                                });
+
+                                cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                                this.creditos.forEach(c => {
+                                    let d = c.disponible;
+                                    vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                        if (d >= cu.saldo) {
+                                            cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                            d = d - cu.saldo;
+                                        }
+                                        else {
+                                            cu.aPagar = parseFloat(d.toFixed(2));
+                                            d = 0;
+                                        }
+                                    });
+                                });
+                            }
+
+                            this.loaderCuotas = false;
+
                             this.credito = credito;
                         },
                         changeAPagar: function (codigo, cuota, evento) {
                             let valor = $(evento.target).val();
-                            let suma = this.creditos
-                                .find(x => x.codigoFondeador == codigo)
+                            let suma = this.cuotas
                                 .cuotas.filter(y => y.codigoFondeador == codigo && y.nNroCuota != cuota)
                                 .map(z => z.aPagar)
                                 .reduce((a, b) => parseFloat(a) + parseFloat(b)) + parseFloat(valor);
@@ -371,8 +440,6 @@
                             else {
                                 this.cuotas.find(y => y.codigoFondeador == codigo && y.nNroCuota == cuota).aPagar = valor;
                             }
-
-
                         },
                         FiltrarFecha: async function () {
 
@@ -385,7 +452,7 @@
                         Buscar: function () {
                             this.encontrados = [];
                             var search = new RegExp(this.query.trim().toUpperCase(), 'i');
-                            var res = this.cuotas.find(x => search.test(x.codigoFondeador) || search.test(x.nombre) || search.test(x.id));
+                            var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
 
                             if (res == undefined) {
                                 this.mensaje = "No se hallaron resultados";
@@ -393,7 +460,7 @@
                                 return;
                             }
 
-                            let elems = this.creditosFiltrados.filter(z => res.codigoFondeador == z.codigoFondeador && res.fondeador == vm.f && res.producto == vm.p);
+                            let elems = this.creditosFiltrados.filter(z => res.codigoFondeador == z.codigoFondeador && res.fondeador == vm.f && res.nSubProd == vm.p);
 
                             if (elems.length == 0) {
                                 this.mensaje = "El resultado hallado no pertenece a este fondeador, producto o " + (vm.condisponible ? "no tiene monto disponible" : "tiene disponible");
@@ -488,13 +555,27 @@
                             }
                         },
                         Filtrar: function () {
-                            if (this.mochila) {
-                                this.creditosFiltrados = this.condisponible ? this.creditos.filter(x => x.disponible != 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id == null) : this.creditos.filter(x => x.disponible == 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id == null);
+                            this.creditosFiltrados = []
+                            vm.cuotas = [];
+                            vm.checkedCreditos = [];
 
+                            if (this.mochila) {
+                                if (this.condisponible)
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible != 0 && x.id == undefined);
+                                else
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible == 0 && x.id == undefined);
+
+                                this.creditosFiltrados
+                            } else {
+                                if (this.condisponible)
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible != 0 && x.id != undefined);
+                                else
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible == 0 && x.id != undefined);
+
+                                this.creditosFiltrados
                             }
-                            else {
-                                this.creditosFiltrados = this.condisponible ? this.creditos.filter(x => x.disponible != 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id != null) : this.creditos.filter(x => x.disponible == 0).filter(x => x.fondeador == vm.f && x.producto == vm.p && x.id != null);
-                            }
+
+
                             if (this.creditosFiltrados.length == 0)
                                 this.CreditosNoEncontrados = true;
                             else
@@ -502,46 +583,35 @@
                             
                         },
                         mainSearch: async function () {
-                            let desde = $("#desde").val();
-                            let hasta = $("#hasta").val();
-                            let estados = this.estados.join(",");
+                            /*
                             this.cuotas = [];
                             this.creditos = [];
                             this.creditosFiltrados = [];
                             this.credito = ""
+                            */
+                            let desde = $("#desde").val();
+                            let hasta = $("#hasta").val();
 
                             var formData = new FormData();
-                            formData.append('pagosDesde', desde);
-                            formData.append('pagosHasta', hasta);
-                            formData.append('nEstadoCuota', estados);
+                            formData.append('desde', desde);
+                            formData.append('hasta', hasta);
 
                             this.loaderCreditos = true;
-                            let creditosRes = await fetch(this.api + "Cuotas/GetCuotas", {
+                            let creditosRes = await fetch(this.api + "Creditos/CreditosFondeador", {
                                 method: 'POST',
                                 body: formData
                             })
                                 .then(response => response.json());
 
-                            vm.cuotas = creditosRes;
+                            vm.creditos = creditosRes;
 
-                            vm.cuotas.forEach(x => {
-                                x.saldo = x.nCuotaMensual - x.pagado;
-                                x.aPagar = 0;
-                            });
+                            this.loaderCreditos = false;
 
-                            [... new Set(vm.cuotas.map(a => a.codigoFondeador))].forEach(b => {
-                                let elem = vm.cuotas.find(x => x.codigoFondeador == b);
-                                vm.creditos.push({
-                                    codigoFondeador: elem.codigoFondeador,
-                                    id: elem.id,
-                                    nombre: elem.nombre,
-                                    cuotas: vm.cuotas.filter(z => z.codigoFondeador == b),
-                                    disponible: elem.id == null ? vm.cuotas.filter(z => z.codigoFondeador == b).map(d=>d.saldo).reduce((a,b)=>parseFloat(a)+parseFloat(b)) :  vm.cuotas.filter(z => z.codigoFondeador == b).map(x => x.disponible)[0],
-                                    producto: vm.cuotas.filter(z => z.codigoFondeador == b)[0].producto,
-                                    fondeador: vm.cuotas.filter(z => z.codigoFondeador == b)[0].fondeador
-                                });
-                            });
+                            this.Filtrar();
 
+                            /*
+
+  
                             this.creditos.forEach(c => {
                                 let d = c.disponible;
                                 vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
@@ -554,11 +624,8 @@
                                         d = 0;
                                     }
                                 });
-                            });      
+                            });    */  
 
-                            this.loaderCreditos = false;
-
-                            this.Filtrar();
                         },
                         CheckAll: function () {
                             if (!this.CheckedAll)
@@ -579,7 +646,7 @@
                             formData.append('pagosHasta', hasta);
                             formData.append('codigoFondeador', codigoFondeador);
 
-                            this.loaderCuotasPorVencer = true;
+                            this.loaderCuotas = true;
 
                             let cuotas = await fetch(this.api + "Cuotas/GetCuotasPorVencer", {
                                 method: 'POST',
@@ -587,7 +654,7 @@
                             })
                                 .then(response => response.json());
 
-                            this.loaderCuotasPorVencer = false;
+                            this.loaderCuotas = false;
 
                             if (cuotas.length == 0) {
                                 this.alertCuotasPorVencer = true;
@@ -641,7 +708,6 @@
 
                         $("#desde").val(moment().subtract(1, 'months').format("YYYY-MM-DD"));
                         $("#hasta").val(moment().format("YYYY-MM-DD"));
-                        this.loaderCuotas = true;
 
                         this.loaderFondeador = true;
                         this.loaderProducto = true;

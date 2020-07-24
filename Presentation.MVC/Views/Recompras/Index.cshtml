@@ -17,11 +17,12 @@
                             <th>RecompraID</th>
                             <th>Fondeador</th>
                             <th>Producto</th>
+                            <th>Cálculo</th>
                             <th>Creación</th>
                             <th>Modificación</th>
                             <th>Cierre</th>
                             <th>Monto</th>
-                            <th colspan="4">Opciones</th>
+                            <th colspan="3">Opciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,16 +30,17 @@
                             <td>{{r.recompraID}}</td>
                             <td>{{fondeadores.find(x=>x.fondeadorID == r.fondeadorID).nombre.toUpperCase()}}</td>
                             <td>{{productos.find(x=>x.nValor == r.productoID).cNomCod.toUpperCase()}}</td>
+                            <td>{{GetDate(r.fechaCalculo)}}</td>
                             <td>{{GetDate(r.creado)}}</td>
                             <td>{{GetDate(r.modificado)}}</td>
                             <td>{{GetDate(r.fechaCierre) == '01-01-0001' ? 'No cerrada' : GetDate(r.fechaCierre)}}</td>
-                            <td>{{formatMoney(r.creditos.map(x=>x.nPrestamo).reduce((x,y)=>x+y))}}</td>
+                            <td>{{formatMoney(r.creditos.map(x=>x.precioRecompra).reduce((x,y)=>x+y))}}</td>
                             <td>
                                 <a href="#" @@click="verDetalle(index)">Ver</a>
                             </td>
-                            <td>
+                            @*<td>
                                 <a href="#" @@click="editar(r.recompraID)">Editar</a>
-                            </td>
+                            </td>*@
                             <td>
                                 <a href="#" :data-index="index" @@click="confirmarModal(index)">Confirmar</a>
                             </td>
@@ -132,18 +134,14 @@
                         <table class="table table-hover table-bordered table-sm" id="data" style="font-size:10pt">
                             <thead>
                                 <tr class="table-primary">
-                                    <th>CreditoID</th>
+                                    <th>Codigo Fondeador</th>
                                     <th>Monto</th>
-                                    <th>Fecha Inicio</th>
-                                    <th>Cuotas</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(c, index) in detalle.creditos">
-                                    <td>{{c.nCodCred}}</td>
-                                    <td>{{c.nPrestamo.toFixed(2)}}</td>
-                                    <td>{{GetDate(c.dFecIni)}}</td>
-                                    <td>{{c.nNroCuotas}}</td>
+                                    <td>{{c.codigoFondeador}}</td>
+                                    <td>{{formatMoney(c.precioRecompra.toFixed(2))}}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -216,7 +214,7 @@
                     }
                 },
                 eliminar: async function (index) {
-                    if (this.recompras[index].fechaCierre != undefined && this.recompras[index].fechaCierre != null && this.recompras[index].fechaCierre != '') {
+                    if (this.recompras[index].fechaCierre != '0001-01-01T00:00:00' && this.recompras[index].fechaCierre != null && this.recompras[index].fechaCierre != '') {
                         this.mensaje = "No se puede eliminar porque ya ha sido confirmado";
                         $("#mensaje").modal("show");
                     }

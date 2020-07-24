@@ -8,364 +8,107 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-md-10">
-                    <div class="row" v-if="screen == 'lista'">
-                        <div class="col-md-2">
-                            <label for="fondeadora">Fondeador:</label>
-                            <select class="form-control" id="fondeador" v-model="fondeador" @@change="seleccionados = []">
-                                <option value="0">Seleccionar</option>
-                                <option v-for="fondeador in fondeadores" :value="fondeador.fondeadorID">{{fondeador.nombre}}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="Producto">Producto:</label>
-                            <select class="form-control" id="producto" v-model="producto" @@change="seleccionados = []">
-                                <option value="0">Todos</option>
-                                <option v-for="(producto, index) in productos" :value="producto.nValor">{{producto.cNomCod}}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px">
-                        <div class="col-md-12" v-if="screen == 'lista'">
-                            <div v-if="seleccionados.length == 0"
-                                 style="border:dashed 3px gray; height:300px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
-                                Busca y selecciona algunos créditos
-                            </div>
-                            <table v-if="seleccionados.length != 0" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                <thead>
-                                    <tr>
-                                        <th>Nro.</th>
-                                        <th>Estado.</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Producto</th>
-                                        <th>Fondeador</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th colspan="2">Opciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="main">
-                                    <tr v-for="credito in seleccionados"
-                                        :id="credito.nCodCred">
-                                        <td>{{credito.nCodCred}}</td>
-                                        <td>{{Estado(credito.nEstado)}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{formatMoney(credito.precio)}}</td>
-                                        <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{credito.producto.cNomCod}}</td>
-                                        <td>{{credito.fondeadorID != 0 ? fondeadores.find(x=>x.fondeadorID = credito.fondeadorID).nombre.toUpperCase() : credito.fondeador != 0 ? fondeadores.find(x=>x.fondeadorID = credito.fondeador).nombre.toUpperCase() : ''}}</td>
-                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
-                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
-                                        <td>
-                                            <a href="#" @@click="verDetalle(credito)">Detalle</a>
-                                        </td>
-                                        <td>
-                                            <a href="#" @@click="Seleccionar(credito,0)">Quitar</a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-12" v-if="screen == 'detalle'">
-                            <h5><b>Análisis</b></h5>
-                            <table v-if="!busquedaSinResultado && !busquedaLoader" class="table table-primary table-sm table-bordered table-hover" id="tableBusqueda">
-                                <thead>
-                                    <tr>
-                                        <th>Nro.</th>
-                                        <th>Codigo</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Vcto.</th>
-                                        <th>Producto</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="main">
-                                    <tr :id="detalle.nCodCred">
-                                        <td>{{detalle.nCodCred}}</td>
-                                        <td>{{detalle.ccodcta}}</td>
-                                        <td>{{Moneda(detalle.nMoneda)}}</td>
-                                        <td>{{formatMoney(detalle.nPrestamo)}}</td>
-                                        <td>{{formatMoney(detalle.precio)}}</td>
-                                        <td>{{detalle.nNroCuotas}}</td>
-                                        <td>{{fecha(detalle.dFecVcto)}}</td>
-                                        <td>{{detalle.producto.cNomCod}}</td>
-                                        <td>{{detalle.dni != null ? 'DNI' : 'RUC'}} {{detalle.dni != null ? detalle.dni : detalle.ruc}}</td>
-                                        <td>{{detalle.dni != null ? detalle.nombres : detalle.razonSocial}}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-6" v-if="screen == 'detalle'">
-                            <h5><b>Cronogramas Palante</b></h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label># cronograma:</label>
-                                </div>
-                                <div class="col-md-6">
-                                    <select style="margin-bottom:10px" class="form-control" v-model="cronogramaPalanteSeleccionado">
-                                        <option v-for="n in detalle.cronogramaPalante.length" :value="n">{{n}}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="overflow-y:auto;max-height:300px;">
-                                <table v-if="detalle.cronogramaPalante.length != 0" class="table table-bordered table-sm table-hover">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Fec. Vcto.</th>
-                                        <th>Capital</th>
-                                        <th>Interes</th>
-                                        <th>P. Gracia</th>
-                                        <th>Total</th>
-                                        <th>Estado</th>
-                                        <th>Pagada</th>
-                                    </tr>
-                                    <tr v-for="cuota in detalle.cronogramaPalante[cronogramaPalanteSeleccionado - 1].cuotas">
-                                        <td>{{cuota.numeroCuota}}</td>
-                                        <td>{{fecha(cuota.fechaPago)}}</td>
-                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                        </td>
-                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 , 'table-success' : cuota.nEstado ==  2  }">
-                                            {{NEstado(cuota.nEstado)}}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-6" v-if="screen == 'detalle'">
-                            <h5><b>Cronogramas Fondeador</b></h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label># cronograma:</label>
-                                </div>
-                                <div class="col-md-6">
-                                    <select style="margin-bottom:10px" class="form-control" v-model="cronogramaPalanteSeleccionado">
-                                        <option v-for="n in detalle.cronogramaFondeador.length" :value="n">{{n}}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div style="overflow-y:auto;max-height:300px;">
-                                <table class="table table-bordered table-sm table-hover">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Fec. Vcto.</th>
-                                        <th>Capital</th>
-                                        <th>Interes</th>
-                                        <th>P. Gracia</th>
-                                        <th>Total</th>
-                                        <th>Estado</th>
-                                        <th>Pagada  </th>
-                                    </tr>
-                                    <tr v-for="cuota in detalle.cronogramaFondeador[0].cuotas">
-                                        <td>{{cuota.NumeroCuota}}</td>
-                                        <td>{{fecha(cuota.fechaPago)}}</td>
-                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                        </td>
-                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 , 'table-success' : cuota.nEstado ==  2  }">
-                                            {{NEstado(cuota.nEstado)}}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="row" v-if="screen == 'detalle'" style="margin-top:20px">
-                        <div class="col-md-12">
-                            <h5><b>Endeudamiento con Palante:</b></h5>
-                            <table class="table table-bordered table-hover table-sm table-sripped table-primary">
-                                <tr>
-                                    <th>PagoID</th>
-                                    <th>Crédito</th>
-                                    <th>Calendario</th>
-                                    <th>Cuota</th>
-                                    <th>Monto</th>
-                                </tr>
-                                <tr v-for="elem in deudaDetalle">
-                                    <td>{{elem.pagoID}}</td>
-                                    <td>{{elem.nCodCred}}</td>
-                                    <td>{{elem.nNroCalendario}}</td>
-                                    <td>{{elem.nNroCuota}}</td>
-                                    <td>{{elem.monto.toFixed(2)}}</td>
-                                </tr>
-                            </table>
-                        </div>
+                <div class="col-md-2">
+                    <p><b>Fondeador:</b></p>
+                    <div class="form-check" v-for="(fondeador, index) in fondeadores">
+                        <input class="form-check-input" type="radio" :id="'fondeador'+index" :value="fondeador.fondeadorID" @@change="Filtrar" v-model="f">
+                        <label class="form-check-label" :for="'fondeador'+index">
+                            {{fondeador.nombre}}
+                        </label>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="row" v-if="screen == 'lista'">
-                        <div class="col">
-                            <label for="total">Total</label>
-                            <input type="text" id="capital" class="form-control" :value="sumatoria.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')" disabled />
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px" v-if="screen == 'detalle'">
-                        <div class="col">
-                            <label for="total">Endeudamiento cliente</label>
-                            <input type="text" id="capital" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px" v-if="screen == 'detalle'">
-                        <div class="col">
-                            <label for="total">Capital a pagar:</label>
-                            <input type="text" id="capital" class="form-control" :value="formatMoney(detalle.precio)" disabled />
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px" v-if="screen == 'detalle'">
-                        <div class="col">
-                            <label for="total">Interes a pagar:</label>
-                            <input type="text" id="intereses" class="form-control" :value="intereses" disabled />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <button style="margin-top:10px;width:100%;margin-bottom:5px"
-                                    class="btn btn-success btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#confirmarGuardar"
-                                    v-if="screen == 'lista'"
-                                    :disabled="seleccionados.length == 0">
-                                Guardar
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row" v-if="screen != 'lista'">
-                        <div class="col">
-                            <button style="margin-top: 10px; width: 100%; margin-bottom: 5px" class="btn btn-warning btn-sm" @@click="screen = 'lista'">Atras</button>
-                        </div>
-                    </div>
-
-                    <div class="row" v-if="screen == 'lista'">
-                        <div class="col">
-                            <button style="margin-top: 10px; width: 100%; margin-bottom: 5px"
-                                    class="btn btn-sm btn-primary btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#exampleModal"
-                                    :disabled="producto == 0 || fondeador == 0">
-                                Buscar
-                            </button>
-                        </div>
-                    </div>
-
-
-
-
-                </div>
-            </div>
-        </div>
-
-
-
-        <div class="modal fade" id="confirmarGuardar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Confirmas que deseas guardar la recompra?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
+                    <p><b>Producto:</b></p>
+                    <div class="form-check" v-for="(producto,index) in productos">
+                        <input class="form-check-input" type="radio" :id="'producto'+index" :value="producto.nValor" @@change="Filtrar" v-model="p">
+                        <label class="form-check-label" :for="'producto'+index">
+                            {{producto.cNomCod}}
+                        </label>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <label for="desde"><b>Búsqueda:</b></label>
+                    <input type="text"
+                           class="form-control"
+                           id="query"
+                           v-model="query"
+                           placeholder="Buscar..."
+                           @@keyup.enter="Buscar" />
+                    <button style="margin-top:8px" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
+                </div>
+                <div class="col-md-3">
+                    <label for="desde"><b>Fecha cálculo:</b></label>
+                    <input type="date" class="form-control" id="fechaCalculo" v-model="fechaCalculo" @@change="CalcularSeleccionados" />
+                </div>
+                <div class="col-md-2">
+                    <button style="margin-top:8px;margin-top: 32px;width:100%" class="btn btn-success" @@click="Guardar">Guardar</button>
+                </div>
             </div>
-        </div>
+            <hr />
+            <div class="row" style="margin-top:10px;">
+                <div class="col-md-6">
 
-
-
-        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Búsqueda</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="parametros" v-if="pantallaBusqueda == 0">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <label for="creado">Fecha corte:</label>
-                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
-                                    <br />
-
-                                    <label for="creado">IDs, DNIs, Código o RUCs:</label>
-                                    <textarea class="form-control" id="busqueda" cols="30" rows="10" v-model="busqueda"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="Cargando" v-if="pantallaBusqueda == 1">
+                    <div v-if="loaderCreditos"
+                         style="border:dashed 3px gray; height:350px;width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
+                        <p>
                             <img src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
-                        </div>
-                        <div id="resultado" v-if="pantallaBusqueda == 2">
-                            <br />
-                            <div v-if="busquedaSinResultado && !busquedaLoader" class="alert alert-warning" role="alert">
-                                No se encontraron resultados
-                            </div>
-                            <table style="margin-top:20px" v-if="!busquedaSinResultado && !busquedaLoader" class="table table-sm table-bordered table-hover" id="tableBusqueda">
+                            <b>Cargando cuotas por crédito... </b>
+                        </p>
+                    </div>
+
+
+                    <div v-if="!loaderCreditos">
+                        <p v-if="encontrados.length != 0">Resultado de búsqueda. <a href="#" @@click="encontrados = []">Limpiar búsqueda</a></p>
+                        <table v-if="encontrados.length != 0" style="font-size:10pt;" class="table table-sm table-hover table-bordered table-success">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Check</th>
+                                    <th scope="col">CodigoFondeador</th>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Es Repro</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="credito in encontrados" style="cursor:pointer;" @@click="verCalculos($event, credito)">
+                                    <th scope="row">
+                                        <input type="checkbox"
+                                               :value="credito.codigoFondeador"
+                                               v-model="checkedCreditos"
+                                               @@change="">
+                                    </th>
+                                    <th>{{credito.codigoFondeador}}</th>
+                                    <th>{{credito.id || ''}}</th>
+                                    <th>{{credito.nombres || ''}}</th>
+                                    <th>{{credito.esReprogramado ? 'Sí' : 'No'}}</th>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p>{{creditosFiltrados.length}} registros</p>
+                        <div style="max-height:350px;overflow-y:auto">
+                            <table id="tablaCreditos" style="font-size:10pt;" class="table table-sm table-hover table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>Sel.</th>
-                                        <th>Nro.</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Vcto.</th>
-                                        <th>Producto</th>
-                                        <th>Fondeador</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
+                                        <th scope="col">Check</th>
+                                        <th scope="col">CodigoFondeador</th>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Es Repro</th>
                                     </tr>
                                 </thead>
-                                <tbody id="main">
-                                    <tr v-for="credito in resBusqueda"
-                                        :class="{ 'table-primary': credito.selected, 'table-danger' : (credito.fondeador != fondeador || credito.fondeador != fondeador) || credito.codigoProducto != producto }"
-                                        :id="credito.nCodCred">
-                                        <td>
+                                <tbody>
+                                    <tr v-for="credito in creditosFiltrados" style="cursor:pointer;" @@click="verCalculos($event, credito)">
+                                        <th scope="row">
                                             <input type="checkbox"
-                                                   class="form-control"
-                                                   @@click="Seleccionar(credito,1)"
-                                                   :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)"
-                                                   :disabled="(credito.fondeador != fondeador || credito.fondeador != fondeador) || credito.codigoProducto != producto">
-                                        </td>
-                                        <td>{{credito.nCodCred}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{credito.precio}}</td>
-                                        <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{fecha(credito.dFecVcto)}}</td>
-                                        <td>{{credito.producto.cNomCod}}</td>
-                                        <td>{{credito.fondeadorID != 0 ? fondeadores.find(x=>x.fondeadorID == credito.fondeadorID).nombre : ''}}</td>
-                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
-                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
+                                                   :value="credito.codigoFondeador"
+                                                   v-model="checkedCreditos"
+                                                   @@change="CalcularSeleccionados">
+                                        </th>
+                                        <th>{{credito.codigoFondeador}}</th>
+                                        <th>{{credito.id || ''}}</th>
+                                        <th>{{credito.nombres || ''}}</th>
+                                        <th>{{credito.esReprogramado ? 'Sí' : 'No'}}</th>
                                     </tr>
                                 </tbody>
                             </table>
@@ -373,370 +116,126 @@
                         </div>
 
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @@click="pantallaBusqueda = 0" v-if="pantallaBusqueda==2">Atras</button>
-                        <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
-                        <button class="btn btn-sm btn-success" @@click="buscar" v-if="pantallaBusqueda==0">Buscar</button>
+
+                </div>
+                <div class="col-md-6">
+                    <div v-if="credito != ''">  
+                        <h5>Cálculos:</h5>
+                        <table id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
+
+                            <tr>
+                                <th scope="row">Cuotas Vencidas y vigente No Pagadas</th>
+                                <td>{{formatMoney(credito.cuotasVencidasVigenteSinPagar) || 0}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Cuotas Por Vencer No Pagadas (Saldo capital)</th>
+                                <td>{{formatMoney(credito.capitalPorVencerSinPagar) || 0}}</td>
+                            </tr>
+                            <tr v-if="credito.esReprogramado">
+                                <th scope="row">Último Pago</th>
+                                <td>{{fecha(credito.fechaUltimoPago) || 0}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Fecha cálculo</th>
+                                <td>{{fecha(fechaCalculo)}}</td>
+                            </tr>
+                            <tr v-if="credito.esReprogramado">
+                                <th scope="row">Días de diferencia</th>
+                                <td>{{credito.DiferenciaDias}}</td>
+                            </tr>
+                            <tr v-if="credito.esReprogramado">
+                                <th scope="row">Tasa</th>
+                                <td>{{formatMoney(credito.nTasaComp) || 0}}</td>
+                            </tr>
+                            <tr v-if="credito.esReprogramado">
+                                <th scope="row">Factor</th>
+                                <td>{{credito.Factor}}</td>
+                            </tr>
+                            <tr v-if="credito.esReprogramado">
+                                <th scope="row">Interés</th>
+                                <td>{{formatMoney(credito.Interes.toFixed(2))}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Precio de Recompra</th>
+                                <td><b>{{formatMoney(credito.precioRecompra.toFixed(2))}}</b></td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
-
-        <div class="modal fade" id="modalDetalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
+        <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel"><b>Detalle Crédito {{detalle.nCodCred}} {{detalle.ccodcta == undefined ? '' : '-' + detalle.ccodcta.trim() }}</b></h5>
+                        <h5 class="modal-title" id="exampleModalLabel">Mensaje</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body" style="max-height:400px;overflow-y:auto">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div id="accordion">
-                                    <div class="card">
-                                        <div class="card-header" id="headingOne">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
-                                                    Datos de crédito
-                                                </button>
-                                            </h5>
-                                        </div>
-
-                                        <div id="collapseZero" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table v-if="detalle != ''" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Nro.</th>
-                                                            <th>Moneda</th>
-                                                            <th>Capital</th>
-                                                            <th>Precio</th>
-                                                            <th>Tasa</th>
-                                                            <th>Cuotas</th>
-                                                            <th>Vcto.</th>
-                                                            <th>Producto</th>
-                                                            <th>ID</th>
-                                                            <th>Nombre</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="main">
-                                                        <tr :id="detalle.nCodCred">
-                                                            <td>{{detalle.nCodCred}}</td>
-                                                            <td>{{Moneda(detalle.nMoneda)}}</td>
-                                                            <td>{{formatMoney(detalle.nPrestamo)}}</td>
-                                                            <td>{{formatMoney(detalle.precio)}}</td>
-                                                            <td>{{detalle.nTasaComp}}</td>
-                                                            <td>{{detalle.nNroCuotas}}</td>
-                                                            <td>{{fecha(detalle.dFecVcto)}}</td>
-                                                            <td>{{detalle.producto.cNomCod}}</td>
-                                                            <td>{{detalle.dni != null ? 'DNI' : 'RUC'}} {{detalle.dni != null ? detalle.dni : detalle.ruc}}</td>
-                                                            <td>{{detalle.dni != null ? detalle.nombres : detalle.razonSocial}}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingOne">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                                    Último cronograma COF
-                                                </button>
-                                            </h5>
-                                        </div>
-
-                                        <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Fec. Vcto.</th>
-                                                        <th>Capital</th>
-                                                        <th>Interes</th>
-                                                        <th>P. Gracia</th>
-                                                        <th>Total</th>
-                                                        <th>Estado</th>
-                                                        <th>Pagada</th>
-                                                    </tr>
-                                                    <tr v-for="cuota in cronogramaPalante.cuotas"
-                                                        :class="{ 'table-success' : cuota.nEstado ==  2  }">
-                                                        <td>{{cuota.numeroCuota}}</td>
-                                                        <td>{{cuota.fechaPago}}</td>
-                                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                                        </td>
-                                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
-                                                            {{NEstado(cuota.nEstado)}}
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingThree">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                                    Cronograma Fondeador
-                                                </button>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Fec. Vcto.</th>
-                                                        <th>Capital</th>
-                                                        <th>Interes</th>
-                                                        <th>P. Gracia</th>
-                                                        <th>Total</th>
-                                                        <th>Estado</th>
-                                                        <th>Pagada</th>
-                                                    </tr>
-                                                    <tr v-for="cuota in cronogramaFondeador.cuotas"
-                                                        :class="{ 'table-success' : cuota.nEstado ==  2  }">
-                                                        <td>{{cuota.numeroCuota}}</td>
-                                                        <td>{{cuota.fechaPago}}</td>
-                                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                                        </td>
-                                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
-                                                            {{NEstado(cuota.nEstado)}}
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingFour">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                                    Deuda con Palante
-                                                </button>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>PagoID</th>
-                                                        <th>Crédito</th>
-                                                        <th>Calendario</th>
-                                                        <th>Cuota</th>
-                                                        <th>Monto</th>
-                                                    </tr>
-                                                    <tr v-for="elem in deudaDetalle">
-                                                        <td>{{elem.pagoID}}</td>
-                                                        <td>{{elem.nCodCred}}</td>
-                                                        <td>{{elem.nNroCalendario}}</td>
-                                                        <td>{{elem.nNroCuota}}</td>
-                                                        <td>{{formatMoney(elem.monto)}}</td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="modal-body">
+                        {{mensaje}}
                     </div>
                     <div class="modal-footer">
-                        <div class="row float-left">
-                            <div class="col">
-                                <label for="total">Deuda Total</label>
-                                <input type="text" id="deuda" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
-                            </div>
-                        </div>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
         </div>
 
+
         @section Scripts{
 
-            <script>
+                <script>
                 var vm = new Vue({
                     el: '#app',
                     data: {
-                        cronogramaPalante: {
-                            cuotas: []
-                        },
-                        cronogramaFondeador: {
-                            cuotas: []
-                        },
-                        pantallaBusqueda: 0,
-                        totalPagar: 0,
-                        intereses:0,
-                        busqueda: "",
-                        tipoBusqueda: 0,
-                        busquedaSinResultado: false,
-                        busquedaLoader: false,
-                        resBusqueda: [],
-                        creado: new Date().toISOString().substring(0, 10),
                         creditos: [],
-                        creditosFiltrados: [],
-                        api: "",
-                        seleccionados: [],
-                        screen: 'lista',
-                        total: 0,
-                        page: 1,
-                        deudaDetalle: "",
-                        pagesize: 10,
-                        producto: 0,
-                        recompra: {
-                            recompraID: "",
-                            fechaCreacion: "",
-                            fechaModificacion: "",
-                            fechaConfirmacion: "",
-                            archivo: "",
-                            monto: "",
-                            creditos: [],
-                            confirmed: false
-                        },
-                        detalle: "",
-                        cronogramaPalanteSeleccionado: 1,
-                        cronogramaFondeadorSeleccionado: 1,
-                        modalAlerta: "",
-                        productos: [],
+                        recompraID: @ViewBag.editar,
+                        loaderCreditos: false,
+                        f: 1,
+                        p: 2,
                         fondeadores: [],
-                        producto: 0,
-                        fondeador: 0,
-                        recompraID: @ViewBag.editar
+                        productos: [],
+                        checkedCreditos: [],
+                        creditosFiltrados: [],
+                        credito: "",
+                        query: "",
+                        encontrados: [],
+                        fechaCalculo: moment().format("YYYY-MM-DD"),
+                        mensaje:""
                     },
                     methods: {
-                        agregarItem: function () {
-                            let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
-                            if (finding == undefined)
-                                this.busquedaItems.push(this.busqueda.trim());
-                            else {
-                                this.mensaje = "Ya agregaste ese item";
-                                $("#mensajeModal").modal("show");
-                            }
-                            this.busqueda = "";
-                        },
-                        eliminarItem: function (index) {
-                            this.busquedaItems.splice(index, 1);
-                        },
-                        Seleccionar: function (credito, busqueda = 0) {
-                            this.seleccionarNeto(credito, busqueda);
-                        },
-                        seleccionarNeto: function (credito, busqueda) {
-                            if (busqueda == 1)
-                                this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected = !(this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected);
-                            else
-                                this.seleccionados.find(x => x.nCodCred == credito.nCodCred).selected = !(this.seleccionados.find(x => x.nCodCred == credito.nCodCred).selected);
+                        CalcularSeleccionados: function () {
+                            vm.creditos.filter(x => vm.checkedCreditos.includes(x.codigoFondeador)).forEach(credito => {
+                                let obj = this.creditos.find(x => x.codigoFondeador == credito.codigoFondeador);
 
-                            let index = this.seleccionados.findIndex(x => x.nCodCred == credito.nCodCred)
+                                if (obj.esReprogramado) {
+                                    obj.DiferenciaDias = this.DiferenciaDias(obj.fechaUltimoPago, this.fechaCalculo);
+                                    obj.Factor = Math.pow(1 + parseFloat(obj.nTasaComp) / 100, parseFloat(obj.DiferenciaDias) / parseFloat(360)) - 1;
+                                    obj.Interes = (Math.pow(1 + parseFloat(obj.nTasaComp) / 100, parseFloat(obj.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(obj.capitalPorVencerSinPagar);
+                                    obj.precioRecompra = parseFloat(obj.cuotasVencidasVigenteSinPagar) + parseFloat(obj.capitalPorVencerSinPagar) + parseFloat(obj.Interes);
+                                }
+                                else {
+                                    obj.precioRecompra = parseFloat(obj.cuotasVencidasVigenteSinPagar) + parseFloat(obj.capitalPorVencerSinPagar);
+                                }
 
-                            if (index == -1) {
-                                this.seleccionados.push(credito);
-                                $("#" + credito.nCodCred).addClass("table-primary");
-                            } else {
-                                this.seleccionados.splice(index, 1);
-                                $("#" + credito.nCodCred).removeClass("table-primary");
-                            }
-                        },
-                        buscar: async function () {
-                            this.pantallaBusqueda = 1;
-                            var formData = new FormData();
-                            formData.append('Query', this.busquedaItems.join(","));
-                            formData.append('Fecha', this.creado);
-                            formData.append('EnFondeador', true);
-
-                            let res = await fetch(this.api + "Creditos/Search", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then(response => response.json());
-
-                            if (res.length == 0) {
-                                this.pantallaBusqueda = 2;
-                                this.busquedaSinResultado = true;
-                            } else {
-                                this.busquedaSinResultado = false;
-                                this.busquedaLoader = false;
-                                res.forEach(x => {
-                                    x.selected = false;
-                                });
-
-                                res.forEach(found => {
-                                    if (vm.seleccionados.map(val => val.nCodCred).includes(found.nCodCred)) {
-                                        found.selected = true;
-                                    }
-                                });
-
-                                this.pantallaBusqueda = 2;
-                                this.resBusqueda = res;
-                            }
-                        },
-                        verDetalle: async function (credito) {
-                            this.detalle = credito;
-                            this.deudaDetalle = await fetch(this.api + "Pagos/FindDeuda?nCodCred=" + this.detalle.nCodCred).then(x => x.json());
-
-                            let res1 = await fetch(this.api + "Cronogramas/CronogramasPalante?codigo=" + this.detalle.nCodCred).then(x => x.json())
-                            this.cronogramaPalante = res1.length != 0 ? res1[res1.length - 1] : [];
-
-                            let res2 = await fetch(this.api + "Cronogramas/CronogramasFondeador?codigo=" + this.detalle.nCodCred).then(x => x.json());
-                            this.cronogramaFondeador = res2.length != 0 ? res2[res1.length - 1] : [];
-
-                            if (vm.cronogramaFondeador.cuotas.filter(x => x.nEstadoCuota == 1 || x.nEstadoCuota == 3).length != 0) {
-                                this.interes = vm.cronogramaFondeador.cuotas.filter(x => x.nEstadoCuota == 1 || x.nEstadoCuota == 3).map(x => x.interes).reduce((x, y) => parseFloat(x) + parseFloat(y))
-                                this.totalPagar = vm.cronogramaFondeador.cuotas.filter(x => x.nEstadoCuota == 1 || x.nEstadoCuota ==3).map(x => x.totalCuota).reduce((x, y) => parseFloat(x) + parseFloat(y))
-                            }
-
-                            $("#modalDetalle").modal("show");
-                        },
-                        changePage: async function () {
-                            await this.buscarGeneral();
-                        },
-                        buscarGeneral: async function () {
-                            var formData1 = new FormData();
-                            formData1.append('page', this.page);
-                            formData1.append('pagesize', this.pagesize);
-                            formData1.append('producto', this.producto);
-
-                            this.creditos = await fetch(this.api + "Creditos/All", {
-                                method: 'POST',
-                                body: formData1
-                            }).then(response => response.json());
-
-                            this.creditos.forEach(x => {
-                                x.selected = false;
                             });
+
+                            if (this.credito != "") {
+                                this.Calcular(this.credito);
+                            }
                         },
-                        GetDate: function (strDate) {
-                            return moment(strDate).format("DD-MM-YYYY");
-                        },
-                        guardar: async function () {
-
-                            var formData = new FormData();
-                            formData.append('RecompraID', this.recompraID);
-                            formData.append('FondeadorID', this.fondeador);
-                            formData.append('ProductoID', this.producto);
-                            formData.append('Creditos', this.seleccionados.map(x=>x.nCodCred).join(","));
-
-                            var res = await fetch(this.api + "Recompras/Save", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then(response => response.json());
-
-                            location.href = '@(ViewBag.domain+"Recompras")';
+                        Calcular: function (credito) {
+                            if (credito.esReprogramado) {
+                                credito.DiferenciaDias = this.DiferenciaDias(credito.fechaUltimoPago, this.fechaCalculo);
+                                credito.Factor = Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1;
+                                credito.Interes = (Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(credito.capitalPorVencerSinPagar)
+                                credito.precioRecompra = parseFloat(credito.cuotasVencidasVigenteSinPagar) + parseFloat(credito.capitalPorVencerSinPagar) + parseFloat(credito.Interes);
+                            } else {
+                                credito.precioRecompra = parseFloat(credito.cuotasVencidasVigenteSinPagar) + parseFloat(credito.capitalPorVencerSinPagar);
+                            }
                         },
                         formatMoney: function (num) {
                             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -786,11 +285,49 @@
                                     return "USD";
                             }
                         },
-                        Sum: function (array, campo) {
-                            let sum = 0;
-                            for (var i = 0; i < array.length; i++)
-                                sum = parseFloat(sum) + parseFloat(array[i][campo]);
-                            return this.formatMoney(sum);
+                        Filtrar: function () {
+                            this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f);
+                        },
+                        verCalculos: function (evento, credito) {
+                            this.Calcular(credito);
+                            this.credito = credito;
+                        },
+                        Buscar: function () {
+                            var search = new RegExp(this.query.trim().toUpperCase(), 'i');
+                            var res = this.creditosFiltrados.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
+
+                            if (res == undefined) {
+                                this.mensaje = "No se hallaron resultados";
+                                $("#modalMensaje").modal("show");
+                            }
+                            else
+                                this.encontrados.push(res);
+                        },
+                        DiferenciaDias: function (desde, hasta) {
+                            let fecha1 = moment(desde)
+                            let fecha2 = moment(hasta)
+                            return fecha2.diff(fecha1, 'days');
+                        },
+                        Guardar: async function () {
+                            let linea = vm.creditos
+                                .filter(x => vm.checkedCreditos.includes(x.codigoFondeador))
+                                .map(e => [e.codigoFondeador, e.precioRecompra.toFixed(2)].join(","))
+                                .join(";");
+
+                            var formData = new FormData();
+                            formData.append('RecompraID', 0);
+                            formData.append('FondeadorID', vm.f);
+                            formData.append('ProductoID', vm.p);
+                            formData.append('Creditos', linea);
+                            formData.append('CreadoPor', JSON.parse(localStorage.getItem("usuario")).nombre);
+                            formData.append('FechaCalculo', this.fechaCalculo);
+
+                            let res = await fetch(this.api + "Recompras/Save", {
+                                method: 'POST',
+                                body: formData
+                            }).then(response => response.json());
+
+                            window.location.href = '@(ViewBag.domain+"Recompras")';
                         }
                     },
                     computed: {
@@ -807,39 +344,33 @@
                     async mounted() {
                         this.api = $("#endpoint").val();
 
+                        //$("#fechaCalculo").val(moment().format("YYYY-MM-DD"))
+
                         this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
                         this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
 
-                        if (this.recompraID != 0) {
-                            var recompra = await fetch(this.api + "Recompras/Find?RecompraID=" + this.recompraID).then(x => x.json());
-                            this.fondeador = recompra.fondeadorID;
-                            this.producto = recompra.productoID;
-                            this.seleccionados = recompra.creditos;
-                        }
+                        let desde = $("#desde").val();
+                        let hasta = $("#hasta").val();
 
-                        this.creditosFiltrados = this.creditos;
-                        this.creditos.forEach(x => {
-                            x.selected = false;
-                        });
+                        var formData = new FormData();
+                        formData.append('desde', (new Date()).toISOString());
+                        formData.append('hasta', (new Date()).toISOString());
 
-                        this.modalBusqueda = $('#exampleModal');
+                        this.loaderCreditos = true;
+                        let creditosRes = await fetch(this.api + "Creditos/CreditosFondeador", {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(response => response.json());
 
-                        this.modalBusqueda.on('hidden.bs.modal', function (e) {
-                            vm.resBusqueda = [];
-                            vm.pantallaBusqueda = 0;
-                        });
 
-                        $("#modalDetalle").on('hidden.bs.modal', function (e) {
-                            this.cronogramaPalante = {
-                                cuotas: []
-                            },
-                                this.cronogramaFondeador = {
-                                    cuotas: []
-                                }
-                        });
+                        this.creditos = creditosRes.filter(x => x.id != null && x.id != '');;
+                        this.Filtrar();
+
+                        this.loaderCreditos = false;
                     }
                 });
 
-            </script>
+                </script>
 
         }

@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Análisis";
+    ViewData["Title"] = "Reportes";
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
 
@@ -8,72 +8,37 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-md-10">
+                <div class="col-md-4">
+
                     <div class="row">
-                        <div class="col-md-12">
-                            <div v-if="seleccionados.length == 0"
-                                 style="border:dashed 3px gray; height:300px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
-                                Busca y selecciona algunos créditos
-                            </div>
-                            <table v-if="seleccionados.length != 0" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                <thead>
-                                    <tr>
-                                        <th>Nro.</th>
-                                        <th>Estado.</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Vcto.</th>
-                                        <th>Producto</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th colspan="2">Opciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="main">
-                                    <tr v-for="credito in seleccionados"
-                                        :id="credito.nCodCred">
-                                        <td>{{credito.nCodCred}}</td>
-                                        <td>{{Estado(credito.nEstado)}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{formatMoney(credito.precio)}}</td>
-                                        <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{fecha(credito.dFecVcto)}}</td>
-                                        <td>{{credito.producto.cNomCod}}</td>
-                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
-                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
-                                        <td>
-                                            <a 
-                                               href="#"
-                                               @@click="verDetalle(credito)"                                               
-                                               >Detalle</a>
-                                        </td>
-                                        <td>
-                                            <a href="#" @@click="Seleccionar(credito,0)">Quitar</a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="col">
+                            <button class="btn btn-sm btn-success btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#modalReporteEstado"
+                                    style="margin-bottom:10px; margin-top:10px; width:100%">
+                                Créditos por estado
+                            </button>
                         </div>
-
-                    </div>
-                </div>
-                <div class="col-md-2">
-
-                    <div class="col">
-                        <label for="total">Total</label>
-                        <input type="text" id="capital" class="form-control" :value="formatMoney(total)" disabled />
                     </div>
 
                     <div class="row">
                         <div class="col">
-                            <button class="btn btn-sm btn-primary btn-sm"
+                            <button class="btn btn-sm btn-warning btn-sm"
                                     data-toggle="modal"
-                                    data-target="#exampleModal"
-                                    style="width:100%;margin-top:10px">
-                                Buscar
+                                    data-target="#modalReporteCreditosDisponibles"
+                                    style="margin-bottom:10px; margin-top:10px; width:100%">
+                                Créditos Disponibles
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-sm btn-warning btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#modalReportePendientesAprobacion"
+                                    style="margin-bottom:10px; margin-top:10px; width:100%">
+                                Créditos Pendientes de Aprobación
                             </button>
                         </div>
                     </div>
@@ -88,10 +53,6 @@
                             </button>
                         </div>
                     </div>
-
-
-
-
                 </div>
             </div>
         </div>
@@ -303,6 +264,53 @@
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="modalReportePendientesAprobacion" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Créditos pendientes de aprobación</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="desde">Desde: </label>
+                        <input type="date" class="form-control" id="desde" v-model="desde" />
+
+                        <label for="hasta" style="margin-top:15px">Hasta: </label>
+                        <input type="date" class="form-control" id="hasta" v-model="hasta" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" @@click="reportePendientesAprobacion">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalReporteCreditosDisponibles" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Créditos disponibles</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="desde">Desde: </label>
+                        <input type="date" class="form-control" id="desde" v-model="desde" />
+
+                        <label for="hasta" style="margin-top:15px">Hasta: </label>
+                        <input type="date" class="form-control" id="hasta" v-model="hasta" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" @@click="reporteCreditosDisponibles">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -428,6 +436,32 @@
             </div>
         </div>
 
+        <div class="modal fade" id="modalReporteEstado" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Créditos por estado</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <h5>Estados:</h5>
+                        <ol>
+                            <li v-for="e in nestados">
+                                <input type="checkbox" :id="'check'+e.valor" :value="e.valor" v-model="estados" />
+                                <label :for="'check'+e.valor">{{e.nombre}}</label>
+                            </li>
+                        </ol>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+                        <button class="btn btn-sm btn-success" @@click="BuscarPorEstado">Generar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         @section Scripts{
 
@@ -601,114 +635,6 @@
                                     console.log(error);
                                 })
                         },
-                        agregarItem: function () {
-                            let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
-                            if (finding == undefined)
-                                this.busquedaItems.push(this.busqueda.trim());
-                            else {
-                                this.mensaje = "Ya agregaste ese item";
-                                $("#mensajeModal").modal("show");
-                            }
-                            this.busqueda = "";
-                        },
-                        eliminarItem: function (index) {
-                            this.busquedaItems.splice(index, 1);
-                        },
-                        Seleccionar: function (credito, busqueda = 0) {
-                            this.seleccionarNeto(credito, busqueda);
-                        },
-                        seleccionarNeto: function (credito, busqueda) {
-                            if (busqueda == 1)
-                                this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected = !(this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected);
-                            else
-                                this.seleccionados.find(x => x.nCodCred == credito.nCodCred).selected = !(this.seleccionados.find(x => x.nCodCred == credito.nCodCred).selected);
-
-                            let index = this.seleccionados.findIndex(x => x.nCodCred == credito.nCodCred)
-
-                            if (index == -1) {
-                                this.seleccionados.push(credito);
-                                $("#" + credito.nCodCred).addClass("table-primary");
-                            } else {
-                                this.seleccionados.splice(index, 1);
-                                $("#" + credito.nCodCred).removeClass("table-primary");
-                            }
-
-                                this.total = vm.seleccionados.filter(x=>x.precio!= undefined).map(x => x.precio).reduce((x, y) => parseFloat(x) + parseFloat(y));
-                        },
-                        buscar: async function () {
-                            this.pantallaBusqueda = 1;
-                            var formData = new FormData();
-                            formData.append('Tipo', this.tipoBusqueda);
-                            formData.append('Query', this.busquedaItems.join(","));
-                            formData.append('Fecha', this.creado);
-
-                            let res = await fetch(this.api + "Creditos/Search", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then(response => response.json());
-
-                            if (res.length == 0) {
-                                this.pantallaBusqueda = 2;
-                                this.busquedaSinResultado = true;
-                            } else {
-                                this.busquedaSinResultado = false;
-                                this.busquedaLoader = false;
-                                res.forEach(x => {
-                                    x.selected = false;
-                                });
-
-                                res.forEach(found => {
-                                    if (vm.seleccionados.map(val => val.nCodCred).includes(found.nCodCred)) {
-                                        found.selected = true;
-                                    }
-                                });
-
-                                this.pantallaBusqueda = 2;
-                                this.resBusqueda = res;
-                            }
-                        },
-                        verDetalle: async function (credito) {
-                            try {
-                                console.log(credito)
-                                this.detalle = credito;
-                                this.deudaDetalle = await fetch(this.api + "Pagos/FindDeuda?nCodCred=" + this.detalle.nCodCred).then(x => x.json());
-
-                                let res1 = await fetch(this.api + "Cronogramas/CronogramasPalante?codigo=" + this.detalle.nCodCred).then(x => x.json())
-                                this.cronogramaPalante = res1.length != 0 ? res1[res1.length - 1] : [];
-
-                                let res2 = await fetch(this.api + "Cronogramas/CronogramasFondeador?codigo=" + this.detalle.nCodCred).then(x => x.json());
-                                this.cronogramaFondeador = res2.length != 0 ? res2[res1.length - 1] : [];
-
-                                $("#modalDetalle").modal("show");
-                            } catch (e) {
-                                console.log(e)
-                            }
-                        },
-                        changePage: async function () {
-                            await this.buscarGeneral();
-                        },
-                        buscarGeneral: async function () {
-                            var formData1 = new FormData();
-                            formData1.append('page', this.page);
-                            formData1.append('pagesize', this.pagesize);
-                            formData1.append('producto', this.producto);
-
-                            this.creditos = await fetch(this.api + "Creditos/All", {
-                                method: 'POST',
-                                body: formData1
-                            }).then(response => response.json());
-
-                            this.creditos.forEach(x => {
-                                x.selected = false;
-                            });
-                        },
-                        GetDate: function (strDate) {
-                            return moment(strDate).format("DD-MM-YYYY");
-                        },
-                        guardar: function () {
-                            console.log(this.seleccionados);
-                        },
                         formatMoney: (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","),
                         fecha: function (date) {
                             return moment(date).format("DD/MM/YYYY")
@@ -755,16 +681,6 @@
                                     return "USD";
                             }
                         },
-                        Sum: function (array, campo) {
-                            let sum = 0;
-                            for (var i = 0; i < array.length; i++)
-                                sum = parseFloat(sum) + parseFloat(array[i][campo]);
-                            return this.formatMoney(sum);
-                        },
-
-                        sumatoria: function () {
-                            this.total = vm.seleccionados.map(x => x.precio).reduce((x, y) => parseFloat(x) + parseFloat(y));
-                        }
                     },
                     computed: {
                     },
@@ -774,11 +690,7 @@
                         this.modalBusqueda = $('#exampleModal');
 
                         this.modalReporteEstado = $('#modalReporteEstado');
-                        
-                        this.modalBusqueda.on('hidden.bs.modal', function (e) {
-                            vm.resBusqueda = [];
-                            vm.pantallaBusqueda = 0;
-                        });
+
                         $("#modalDetalle").on('hidden.bs.modal', function (e) {
                             this.cronogramaPalante = {
                                 cuotas: []

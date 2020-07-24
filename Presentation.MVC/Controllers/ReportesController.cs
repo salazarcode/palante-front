@@ -7,12 +7,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace Presentation.MVC.Controllers
 {
-    public class AnalisisController : Controller
+    public class ReportesController : Controller
     {
         private readonly IConfiguration _conf;
         private readonly string apiEndpoint;
         private readonly string domain;
-        public AnalisisController(IConfiguration conf)
+        public ReportesController(IConfiguration conf)
         {
             _conf = conf;
             apiEndpoint = _conf.GetSection("apiendpoint").Value;
