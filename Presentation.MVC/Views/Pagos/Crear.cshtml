@@ -59,17 +59,18 @@
                 </div>
                 <div class="col-md-4">
                     <div class="row">
-                        <div class="col-md-9">
-                            <input style="margin-top:8px"
-                                   type="text"
-                                   class="form-control"
-                                   id="query"
-                                   v-model="query"
-                                   placeholder="Buscar..."
-                                   @@keyup.enter="Buscar" />
+                        <div class="col-md-12">
+                            <label for="desde"><b>Búsqueda:</b></label>
                         </div>
-                        <div class="col-md-3">
-                            <button style="margin-top:8px;width:100%" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-10">
+                                    <textarea class="form-control" style="height:38px;width:100%" v-model="query">{{query}}</textarea>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="row">
@@ -189,7 +190,7 @@
                     <div v-if="credito == ''"
                          style="border:dashed 3px gray; height:350px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
                         <p>
-                            <b>Selecciona un crédito para ver su detalle.</b>
+                            <b>Selecciona un crédito para ver sus cuotas.</b>
                         </p>
                     </div>
 
@@ -451,23 +452,24 @@
                         },
                         Buscar: function () {
                             this.encontrados = [];
-                            var search = new RegExp(this.query.trim().toUpperCase(), 'i');
-                            var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
 
-                            if (res == undefined) {
-                                this.mensaje = "No se hallaron resultados";
-                                $("#modalMensaje").modal("show");
-                                return;
-                            }
+                            this.query.split("\n").forEach(query => {
+                                var search = new RegExp(query.trim().toUpperCase(), 'i');
+                                var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
 
-                            let elems = this.creditosFiltrados.filter(z => res.codigoFondeador == z.codigoFondeador && res.fondeador == vm.f && res.nSubProd == vm.p);
-
-                            if (elems.length == 0) {
-                                this.mensaje = "El resultado hallado no pertenece a este fondeador, producto o " + (vm.condisponible ? "no tiene monto disponible" : "tiene disponible");
-                                $("#modalMensaje").modal("show");
-                                return;
-                            }
-                            this.encontrados = elems
+                                if (res != undefined) {
+                                    if (this.creditosFiltrados.filter(x => x.codigoFondeador == res.codigoFondeador).length == 0) {
+                                        this.mensaje = "El resultado hallado no pertenece a este fondeador, producto o " + (vm.condisponible ? "no tiene monto disponible" : "tiene disponible");
+                                        $("#modalMensaje").modal("show");
+                                    } else {
+                                        this.encontrados.push(res)
+                                    }
+                                }
+                                else {
+                                    this.mensaje = "No se hallaron resultados";
+                                    $("#modalMensaje").modal("show");
+                                }
+                            });
                         },
                         formatMoney: function (num) {
                             return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");

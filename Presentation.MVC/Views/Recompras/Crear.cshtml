@@ -28,13 +28,8 @@
                 </div>
                 <div class="col-md-3">
                     <label for="desde"><b>Búsqueda:</b></label>
-                    <input type="text"
-                           class="form-control"
-                           id="query"
-                           v-model="query"
-                           placeholder="Buscar..."
-                           @@keyup.enter="Buscar" />
-                    <button style="margin-top:8px" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
+                    <textarea class="form-control" style="height:38px" v-model="query">{{query}}</textarea>
+                    <button type="button" style="margin-top:5px" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
                 </div>
                 <div class="col-md-3">
                     <label for="desde"><b>Fecha cálculo:</b></label>
@@ -119,7 +114,7 @@
 
                 </div>
                 <div class="col-md-6">
-                    <div v-if="credito != ''">  
+                    <div v-if="credito != ''">
                         <h5>Cálculos:</h5>
                         <table id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
 
@@ -187,7 +182,7 @@
 
         @section Scripts{
 
-                <script>
+            <script>
                 var vm = new Vue({
                     el: '#app',
                     data: {
@@ -293,15 +288,20 @@
                             this.credito = credito;
                         },
                         Buscar: function () {
-                            var search = new RegExp(this.query.trim().toUpperCase(), 'i');
-                            var res = this.creditosFiltrados.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
+                            this.query.split("\n").forEach(query => {
+                                var search = new RegExp(query.trim().toUpperCase(), 'i');
+                                var res = this.creditosFiltrados.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
 
-                            if (res == undefined) {
+                                if (res != undefined) {
+                                    if(!this.encontrados.map(x=>x.codigoFondeador).includes(res.codigoFondeador))
+                                        this.encontrados.push(res);
+                                }
+                            });
+                            if (this.encontrados.length == 0) {
                                 this.mensaje = "No se hallaron resultados";
                                 $("#modalMensaje").modal("show");
                             }
-                            else
-                                this.encontrados.push(res);
+
                         },
                         DiferenciaDias: function (desde, hasta) {
                             let fecha1 = moment(desde)
@@ -371,6 +371,6 @@
                     }
                 });
 
-                </script>
+            </script>
 
         }

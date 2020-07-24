@@ -57,154 +57,6 @@
             </div>
         </div>
 
-        <div class="modal fade" id="modalDetalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel"><b>Detalle Crédito {{detalle.nCodCred}} {{detalle.ccodcta == undefined ? '' : '-' + detalle.ccodcta.trim() }}</b></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body" style="max-height:400px;overflow-y:auto">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div id="accordion">
-                                    <div class="card">
-                                        <div class="card-header" id="headingOne">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
-                                                    Datos de crédito
-                                                </button>
-                                            </h5>
-                                        </div>
-
-                                        <div id="collapseZero" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table v-if="detalle != ''" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Nro.</th>
-                                                            <th>Moneda</th>
-                                                            <th>Capital</th>
-                                                            <th>Precio</th>
-                                                            <th>Tasa</th>
-                                                            <th>Cuotas</th>
-                                                            <th>Vcto.</th>
-                                                            <th>Producto</th>
-                                                            <th>ID</th>
-                                                            <th>Nombre</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="main">
-                                                        <tr :id="detalle.nCodCred">
-                                                            <td>{{detalle.nCodCred}}</td>
-                                                            <td>{{Moneda(detalle.nMoneda)}}</td>
-                                                            <td>{{formatMoney(detalle.nPrestamo)}}</td>
-                                                            <td>{{formatMoney(detalle.precio)}}</td>
-                                                            <td>{{detalle.nTasaComp}}</td>
-                                                            <td>{{detalle.nNroCuotas}}</td>
-                                                            <td>{{fecha(detalle.dFecVcto)}}</td>
-                                                            <td>{{detalle.producto.cNomCod}}</td>
-                                                            <td>{{detalle.dni != null ? 'DNI' : 'RUC'}} {{detalle.dni != null ? detalle.dni : detalle.ruc}}</td>
-                                                            <td>{{detalle.dni != null ? detalle.nombres : detalle.razonSocial}}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingOne">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                                    Último cronograma COF
-                                                </button>
-                                            </h5>
-                                        </div>
-
-                                        <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Fec. Vcto.</th>
-                                                        <th>Capital</th>
-                                                        <th>Interes</th>
-                                                        <th>P. Gracia</th>
-                                                        <th>Total</th>
-                                                        <th>Estado</th>
-                                                        <th>Pagada</th>
-                                                    </tr>
-                                                    <tr v-for="cuota in cronogramaPalante.cuotas"
-                                                        :class="{ 'table-success' : cuota.nEstado ==  2  }">
-                                                        <td>{{cuota.numeroCuota}}</td>
-                                                        <td>{{cuota.fechaPago}}</td>
-                                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                                        </td>
-                                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
-                                                            {{NEstado(cuota.nEstado)}}
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingThree">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                                    Cronograma Fondeador
-                                                </button>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Fec. Vcto.</th>
-                                                        <th>Capital</th>
-                                                        <th>Interes</th>
-                                                        <th>P. Gracia</th>
-                                                        <th>Total</th>
-                                                        <th>Estado</th>
-                                                        <th>Pagada</th>
-                                                    </tr>
-                                                    <tr v-for="cuota in cronogramaFondeador.cuotas"
-                                                        :class="{ 'table-success' : cuota.nEstado ==  2  }">
-                                                        <td>{{cuota.numeroCuota}}</td>
-                                                        <td>{{cuota.fechaPago}}</td>
-                                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                                        </td>
-                                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
-                                                            {{NEstado(cuota.nEstado)}}
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="row float-left">
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="modal fade" id="modalReportePendientesAprobacion" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -299,6 +151,7 @@
             </div>
         </div>
 
+
         @section Scripts{
 
             <script>
@@ -353,9 +206,9 @@
                             cuotas: []
                         },
                         cronogramaFondeador: {
-                            cuotas:[]
+                            cuotas: []
                         },
-                        total:"0.00"
+                        total: "0.00"
                     },
                     methods: {
                         reportePendientesAprobacion: async function () {
@@ -531,9 +384,9 @@
                             this.cronogramaPalante = {
                                 cuotas: []
                             },
-                            this.cronogramaFondeador = {
-                                cuotas: []
-                            }
+                                this.cronogramaFondeador = {
+                                    cuotas: []
+                                }
                         });
                     }
                 });
