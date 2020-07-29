@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-3">
                     <label for="desde"><b>Búsqueda:</b></label>
-                    <textarea class="form-control" style="height:38px" v-model="query">{{query}}</textarea>
+                    <textarea class="form-control" style="height:38px" v-model="query" placeholder="id, credito, nombre...">{{query}}</textarea>
                     <button type="button" style="margin-top:5px" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
                 </div>
                 <div class="col-md-3">
@@ -93,17 +93,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="credito in creditosFiltrados" style="cursor:pointer;" @@click="verCalculos($event, credito)">
+                                    <tr v-for="c in creditosFiltrados" style="cursor:pointer;" @@click="verCalculos($event, c)" :class="{'table-primary': c.codigoFondeador == credito.codigoFondeador}">
                                         <th scope="row">
                                             <input type="checkbox"
-                                                   :value="credito.codigoFondeador"
+                                                   :value="c.codigoFondeador"
                                                    v-model="checkedCreditos"
                                                    @@change="CalcularSeleccionados">
                                         </th>
-                                        <th>{{credito.codigoFondeador}}</th>
-                                        <th>{{credito.id || ''}}</th>
-                                        <th>{{credito.nombres || ''}}</th>
-                                        <th>{{credito.esReprogramado ? 'Sí' : 'No'}}</th>
+                                        <th>{{c.codigoFondeador}}</th>
+                                        <th>{{c.id || ''}}</th>
+                                        <th>{{c.nombres || ''}}</th>
+                                        <th>{{c.esReprogramado ? 'Sí' : 'No'}}</th>
                                     </tr>
                                 </tbody>
                             </table>
@@ -116,43 +116,76 @@
                 <div class="col-md-6">
                     <div v-if="credito != ''">
                         <h5>Cálculos:</h5>
+
                         <table id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
+
+                            <tr>
+                                <th scope="row">Crédito</th>
+                                <td>{{credito.codigoFondeador}}</td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">ID</th>
+                                <td>{{credito.id}}</td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">Nombres</th>
+                                <td>{{credito.nombres}}</td>
+                            </tr>
 
                             <tr>
                                 <th scope="row">Cuotas Vencidas y vigente No Pagadas</th>
                                 <td>{{formatMoney(credito.cuotasVencidasVigenteSinPagar) || 0}}</td>
                             </tr>
+
                             <tr>
                                 <th scope="row">Cuotas Por Vencer No Pagadas (Saldo capital)</th>
                                 <td>{{formatMoney(credito.capitalPorVencerSinPagar) || 0}}</td>
                             </tr>
-                            <tr v-if="credito.esReprogramado">
+
+                            <tr>
                                 <th scope="row">Último Pago</th>
                                 <td>{{fecha(credito.fechaUltimoPago) || 0}}</td>
                             </tr>
+
                             <tr>
                                 <th scope="row">Fecha cálculo</th>
                                 <td>{{fecha(fechaCalculo)}}</td>
                             </tr>
-                            <tr v-if="credito.esReprogramado">
+
+                            <tr>
                                 <th scope="row">Días de diferencia</th>
                                 <td>{{credito.DiferenciaDias}}</td>
                             </tr>
-                            <tr v-if="credito.esReprogramado">
+
+                            <tr>
                                 <th scope="row">Tasa</th>
                                 <td>{{formatMoney(credito.nTasaComp) || 0}}</td>
                             </tr>
-                            <tr v-if="credito.esReprogramado">
+
+                            <tr>
                                 <th scope="row">Factor</th>
                                 <td>{{credito.Factor}}</td>
                             </tr>
-                            <tr v-if="credito.esReprogramado">
+
+                            <tr>
                                 <th scope="row">Interés</th>
                                 <td>{{formatMoney(credito.Interes.toFixed(2))}}</td>
                             </tr>
+
                             <tr>
                                 <th scope="row">Precio de Recompra</th>
-                                <td><b>{{formatMoney(credito.precioRecompra.toFixed(2))}}</b></td>
+                                <td>
+                                    <b>{{formatMoney(credito.precioRecompra.toFixed(2))}}</b>
+                                        <input type="checkbox"
+                                               data-toggle="tooltip" data-placement="top" title="Activar Cálculo Diario"
+                                               :disabled="credito.Interes == 0"
+                                               id="checkCalculoDiario"
+                                               v-model="credito.CalcularDiariamente"
+                                               @@change="CalcularDiario(credito)"
+                                               style="width: 15px;height:15px;float:right">
+                                </td>
                             </tr>
                         </table>
                     </div>
@@ -202,19 +235,26 @@
                         mensaje:""
                     },
                     methods: {
+                        CalcularDiario: function (credito) {
+                            credito.precioRecompra = 0;
+                            credito.precioRecompra += parseFloat(credito.cuotasVencidasVigenteSinPagar);
+                            credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
+                            credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
+                        },
                         CalcularSeleccionados: function () {
                             vm.creditos.filter(x => vm.checkedCreditos.includes(x.codigoFondeador)).forEach(credito => {
                                 let obj = this.creditos.find(x => x.codigoFondeador == credito.codigoFondeador);
 
-                                if (obj.esReprogramado) {
+                                if ((new Date(vm.credito.fechaUltimoPago)).getFullYear() != 1) {
                                     obj.DiferenciaDias = this.DiferenciaDias(obj.fechaUltimoPago, this.fechaCalculo);
                                     obj.Factor = Math.pow(1 + parseFloat(obj.nTasaComp) / 100, parseFloat(obj.DiferenciaDias) / parseFloat(360)) - 1;
                                     obj.Interes = (Math.pow(1 + parseFloat(obj.nTasaComp) / 100, parseFloat(obj.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(obj.capitalPorVencerSinPagar);
-                                    obj.precioRecompra = parseFloat(obj.cuotasVencidasVigenteSinPagar) + parseFloat(obj.capitalPorVencerSinPagar) + parseFloat(obj.Interes);
                                 }
-                                else {
-                                    obj.precioRecompra = parseFloat(obj.cuotasVencidasVigenteSinPagar) + parseFloat(obj.capitalPorVencerSinPagar);
-                                }
+
+                                obj.precioRecompra = 0;
+                                obj.precioRecompra += parseFloat(obj.cuotasVencidasVigenteSinPagar);
+                                obj.precioRecompra += parseFloat(obj.capitalPorVencerSinPagar);
+                                obj.precioRecompra += obj.CalcularDiariamente ? parseFloat(obj.Interes) : 0;
 
                             });
 
@@ -223,14 +263,17 @@
                             }
                         },
                         Calcular: function (credito) {
-                            if (credito.esReprogramado) {
+                            if ((new Date(credito.fechaUltimoPago)).getFullYear() != 1) {
                                 credito.DiferenciaDias = this.DiferenciaDias(credito.fechaUltimoPago, this.fechaCalculo);
                                 credito.Factor = Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1;
-                                credito.Interes = (Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(credito.capitalPorVencerSinPagar)
-                                credito.precioRecompra = parseFloat(credito.cuotasVencidasVigenteSinPagar) + parseFloat(credito.capitalPorVencerSinPagar) + parseFloat(credito.Interes);
-                            } else {
-                                credito.precioRecompra = parseFloat(credito.cuotasVencidasVigenteSinPagar) + parseFloat(credito.capitalPorVencerSinPagar);
+                                credito.Interes = (Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(credito.capitalPorVencerSinPagar);
                             }
+
+                            credito.precioRecompra = 0;
+                            credito.precioRecompra += parseFloat(credito.cuotasVencidasVigenteSinPagar);
+                            credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
+                            credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
+
                         },
                         formatMoney: function (num) {
                             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -286,6 +329,8 @@
                         verCalculos: function (evento, credito) {
                             this.Calcular(credito);
                             this.credito = credito;
+
+                            $('[data-toggle="tooltip"]').tooltip();
                         },
                         Buscar: function () {
                             this.query.split("\n").forEach(query => {
@@ -342,8 +387,7 @@
                         }
                     },
                     async mounted() {
-                        this.api = $("#endpoint").val();
-
+                        this.api = $("#endpoint").val(); 
                         //$("#fechaCalculo").val(moment().format("YYYY-MM-DD"))
 
                         this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
@@ -363,8 +407,16 @@
                         })
                             .then(response => response.json());
 
+                        creditosRes.forEach(credito => {
+                            credito.DiferenciaDias = 0;
+                            credito.Factor = 0;
+                            credito.Interes = 0;
+                            credito.PrecioRecompra = 0;
+                            credito.CalcularDiariamente = credito.esReprogramado;
+                        });
 
-                        this.creditos = creditosRes.filter(x => x.id != null && x.id != '');;
+
+                        this.creditos = creditosRes.filter(x => x.id != null && x.id != '');
                         this.Filtrar();
 
                         this.loaderCreditos = false;

@@ -7,27 +7,20 @@
         <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
         <input type="hidden" id="domain" name="domain" value="@ViewBag.domain" />
 
+        <input type="hidden" id="PagoID" name="PagoID" value="@ViewBag.PagoID" />
+        <input type="hidden" id="fondeador" name="fondeador" value="@ViewBag.fondeador" />
+        <input type="hidden" id="producto" name="producto" value="@ViewBag.producto" />
+        <input type="hidden" id="mochila" name="mochila" value="@ViewBag.mochila" />
+
         <div class="container">
             <div class="row">
                 <div class="col-md-2">
-                    <p><b>Fondeador:</b></p>
-                    <div class="form-check" v-for="(fondeador, index) in fondeadores">
-                        <input class="form-check-input" type="radio" :id="'fondeador'+index" :value="fondeador.fondeadorID" @@change="Filtrar" v-model="f">
-                        <label class="form-check-label" :for="'fondeador'+index">
-                            {{fondeador.nombre}}
-                        </label>
-                    </div>
+                    <label for="fondeador">Fondeador: </label>
+                    <input type="text" class="form-control" name="fondeador" id="fondeador" v-model="elFondeador" disabled />
+                    <label for="producto">Producto: </label>
+                    <input type="text" class="form-control" name="producto" id="producto" v-model="elProducto" disabled />
                 </div>
                 <div class="col-md-2">
-                    <p><b>Producto:</b></p>
-                    <div class="form-check" v-for="(producto,index) in productos">
-                        <input class="form-check-input" type="radio" :id="'producto'+index" :value="producto.nValor" @@change="Filtrar" v-model="p">
-                        <label class="form-check-label" :for="'producto'+index">
-                            {{producto.cNomCod}}
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-1">
                     <p><b>Disponible:</b></p>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="condisponible" id="disponiblesi" :value="true" v-model="condisponible" @@change="Filtrar" checked>
@@ -42,60 +35,27 @@
                         </label>
                     </div>
                 </div>
-                <div class="col-md-1">
-                    <p><b>Mochila:</b></p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="mochila" id="mochilasi" :value="true" v-model="mochila" @@change="Filtrar">
-                        <label class="form-check-label" for="mochilasi">
-                            Sí
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="mochila" id="mochilano" :value="false" v-model="mochila" @@change="Filtrar">
-                        <label class="form-check-label" for="mochilano">
-                            No
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <label for="desde"><b>Búsqueda:</b></label>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="row">
-                                <div class="col-md-10">
-                                    <textarea class="form-control" style="height:38px;width:100%" v-model="query">{{query}}</textarea>
-                                </div>
-                                <div class="col-md-1">
-                                    <button type="button" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="desde"><b>Disponible desde:</b></label>
-                            <input type="date" class="form-control" id="desde" value="" @@change="FiltrarFecha" />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="hasta"><b>Disponible hasta:</b></label>
-                            <input type="date" class="form-control" id="hasta" value="" @@change="FiltrarFecha" />
-                        </div>
-                    </div>
+                <div class="col-md-2">
+                    <label for="desde"><b>Búsqueda:</b></label>
+                    <textarea class="form-control" style="height:65px;width:100%" v-model="query">{{query}}</textarea>
+                    <button type="button" class="btn btn-success btn-sm" style="margin-top:10px" @@click="Buscar">Buscar</button>
                 </div>
                 <div class="col-md-2">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <button class="btn btn-primary" style="width:100%" @@click="guardar" :disabled="loaderCuotas">Guardar</button>
-                            <div v-if="loaderCuotas" style="margin-top:5px">
-                                <p>
-                                    <img src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
-                                    <b>Buscado Cuotas...</b>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <label for="desde"><b>Disponible desde - hasta:</b></label>
+                    <input type="date" class="form-control" id="desde" value="" @@change="FiltrarFecha" />
+
+                    <input type="date" class="form-control" id="hasta" value="" @@change="FiltrarFecha" />
+                </div>
+
+
+
+                <div class="col-md-2">
+
+                </div>
+                <div class="col-md-2">
+                    <label for="suma" style="">Pago Total:</label>
+                    <input type="text" id="suma" class="form-control" :value="suma" style="width:100%;" :disabled="true" />
+                    <button class="btn btn-primary" style="width:100%;margin-top:15px" @@click="guardar" :disabled="loaderCuotas">Guardar</button>
                 </div>
             </div>
 
@@ -187,6 +147,32 @@
                 </div>
                 <div class="col-md-6" style="max-height:350px;overflow-y:auto">
 
+                    <div style="width:100%" v-if="mochila || f == 2">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <b>Búsqueda de cuotas:</b>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="cuotasHasta">Cuotas hasta:</label>
+                                <input type="date" id="cuotasHasta" v-model="cuotasHasta" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label>Estados:</label>
+                                <div v-for="(estado,index) in estados">
+                                    <input type="checkbox" :id="'estado' + index" :value="estado.valor" v-model="checkedEstados">
+                                    <label :for="'estado' + index">{{estado.nombre}}</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-success btn-sm" style="width:100%" :disabled="checkedEstados.length == 0">Buscar</button>
+                            </div>
+                        </div>
+
+                        <hr />
+                    </div>
+
                     <div v-if="credito == ''"
                          style="border:dashed 3px gray; height:350px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
                         <p>
@@ -200,7 +186,7 @@
                         <div v-if="loaderCuotas" style="margin-top:5px">
                             <p>
                                 <img src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
-                                <b>Buscado Cuotas...</b>
+                                <b>Buscando Cuotas...</b>
                             </p>
                         </div>
 
@@ -288,7 +274,7 @@
 
         @section Scripts{
 
-                <script>
+            <script>
                 var vm = new Vue({
                     el: '#app',
                     data: {
@@ -303,6 +289,7 @@
                         api: "",
                         domain:"",
                         pagos: [],
+                        PagoID: 0,
                         f: 1,
                         mensaje: "",
                         p: 2,
@@ -334,8 +321,18 @@
                         alertCuotasPorVencer: false,
                         CheckedAll: false,
                         estados: [
-                            1,2
-                        ]
+                            {
+                                valor: 1,
+                                nombre: "Vigente"
+                            },
+                            {
+                                valor: 2,
+                                nombre: "Vencido"
+                            }
+                        ],
+                        cuotasHasta: moment().format("YYYY-MM-DD"),
+                        checkedEstados: []
+
                     },
                     methods: {
                         ChangeChecked: async function () {
@@ -352,7 +349,7 @@
                                 })
                             }
 
-                            
+
 
                             var formData = new FormData();
                             formData.append('buscar', faltantes.join(','));
@@ -393,6 +390,15 @@
                             var formData = new FormData();
                             formData.append('buscar', credito.codigoFondeador);
 
+                            if (this.mochila) {
+                                formData.append('cuotasHasta', $("#cuotasHasta").val());
+                                formData.append('estados', this.checkedEstados.join(','));
+                            }
+                            else {
+                                formData.append('cuotasHasta', '01-01-1999');
+                                formData.append('estados', '0');
+                            }
+
                             let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
                                 method: 'POST',
                                 body: formData
@@ -428,10 +434,12 @@
                         },
                         changeAPagar: function (codigo, cuota, evento) {
                             let valor = $(evento.target).val();
-                            let suma = this.cuotas
+
+
+                            let suma = this.cuotas.length != 0 ? this.cuotas
                                 .cuotas.filter(y => y.codigoFondeador == codigo && y.nNroCuota != cuota)
                                 .map(z => z.aPagar)
-                                .reduce((a, b) => parseFloat(a) + parseFloat(b)) + parseFloat(valor);
+                                .reduce((a, b) => parseFloat(a) + parseFloat(b)) + parseFloat(valor) : 0;
 
                             if (suma > this.creditos.find(y => y.codigoFondeador == codigo).disponible) {
                                 event.target.value = this.cuotas.find(y => y.codigoFondeador == codigo && y.nNroCuota == cuota).aPagar;
@@ -527,6 +535,7 @@
                             formData.append('ProductoID', vm.p);
                             formData.append('Creador', JSON.parse(localStorage.getItem("usuario")).nombre);
                             formData.append('Pagos', detalles.join(";"));
+                            formData.append('EsMochila', false);
 
                             let res = await fetch(this.api + "Pagos/Save", {
                                 method: 'POST',
@@ -562,6 +571,7 @@
                             vm.checkedCreditos = [];
 
                             if (this.mochila) {
+                                this.condisponible = false;
                                 if (this.condisponible)
                                     this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible != 0 && x.id == undefined);
                                 else
@@ -582,15 +592,11 @@
                                 this.CreditosNoEncontrados = true;
                             else
                                 this.CreditosNoEncontrados = false;
-                            
+
+
+
                         },
                         mainSearch: async function () {
-                            /*
-                            this.cuotas = [];
-                            this.creditos = [];
-                            this.creditosFiltrados = [];
-                            this.credito = ""
-                            */
                             let desde = $("#desde").val();
                             let hasta = $("#hasta").val();
 
@@ -613,7 +619,7 @@
 
                             /*
 
-  
+
                             this.creditos.forEach(c => {
                                 let d = c.disponible;
                                 vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
@@ -626,7 +632,7 @@
                                         d = 0;
                                     }
                                 });
-                            });    */  
+                            });    */
 
                         },
                         CheckAll: function () {
@@ -671,7 +677,7 @@
                             this.creditos.find(x=>x.codigoFondeador == codigoFondeador).cuotas
 
                             console.log(cuotas);
-                            
+
                             cuotas.forEach(c => {
                                 vm.cuotas.push(c);
                                 vm.creditos.find(x => x.codigoFondeador == vm.credito.codigoFondeador).cuotas.push(c);
@@ -692,24 +698,48 @@
                                     }
                                 });
                             });
-                            
+
                         }
                     },
                     computed: {
                         suma: function () {
                             let res = 0;
-                            this.cuotasFiltradas.filter(x => x.selected).forEach(x => {
-                                res += x.aPagar;
-                            });
+
+                            if (this.checkedCreditos.length != 0) {
+                                let cuotasConMonto = this.cuotas.filter(x => this.checkedCreditos.includes(x.codigoFondeador) && x.aPagar != 0)
+                                let suma = cuotasConMonto.map(x => x.aPagar).reduce((a, b) => parseFloat(a) + parseFloat(b))
+                                res = this.formatMoney(suma)
+                            }
+
                             return res;
+                        },
+                        elFondeador: function () {
+                            if (this.fondeadores.length == 0)
+                                return "";
+                            else
+                                return this.fondeadores.find(x => x.fondeadorID == this.f).nombre
+                        },
+                        elProducto: function () {
+                            if (this.productos.length == 0)
+                                return "";
+                            else
+                                return this.productos.find(x => x.nValor == this.p).cNomCod
                         }
                     },
                     async mounted() {
                         this.api = $("#endpoint").val();
                         this.domain = $("#domain").val();
 
+
+                        this.PagoID = $("#PagoID").val();
+                        this.f = $("#fondeador").val();
+                        this.p = $("#producto").val();
+                        this.mochila = $("#mochila").val() == 1 ? true : false;
+
+
                         $("#desde").val(moment().subtract(1, 'months').format("YYYY-MM-DD"));
                         $("#hasta").val(moment().format("YYYY-MM-DD"));
+                        $("#cuotasHasta").val(moment().format("YYYY-MM-DD"));
 
                         this.loaderFondeador = true;
                         this.loaderProducto = true;
@@ -741,6 +771,6 @@
                     }
                 });
 
-                </script>
+            </script>
 
         }

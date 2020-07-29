@@ -19,12 +19,22 @@ namespace Presentation.MVC.Controllers
             domain = _conf.GetSection("domain").Value;
         }
 
-        public IActionResult Crear(int id = -1)
+        public IActionResult Crear(int PagoID = 0, int fondeador = 0, int producto = 0, int mochila = 0, decimal monto = 0)
         {
             ViewBag.endpoint = apiEndpoint;
             ViewBag.domain = domain;
-            ViewBag.editar = id;
-            return View();
+
+            ViewBag.PagoID = PagoID;
+            ViewBag.producto = producto;
+            ViewBag.fondeador = fondeador;
+            ViewBag.mochila = mochila;
+            ViewBag.monto = monto;
+
+
+            if (fondeador == 2 || mochila == 1)
+                return View("CrearCapitalMochila");
+            else
+                return View("CrearEstandar");
 
         }
 

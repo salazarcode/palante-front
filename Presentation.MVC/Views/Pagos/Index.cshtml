@@ -4,11 +4,6 @@
 }
 <div class="container" id="app">
     <div class="row">
-        <div class="col-md-3">
-            <button class="btn btn-primary btn-sm" @@click="crear">Crear Pago</button>
-        </div>
-    </div>
-    <div class="row">
         <div class="col-md-12">
             <table class="table table-hover table-bordered table-sm" style="margin-top:20px">
                 <thead>
@@ -17,6 +12,7 @@
                         <th>Creador</th>
                         <th>Fondeador</th>
                         <th>Producto</th>
+                        <th>EsMochila</th>
                         <th>Creditos</th>
                         <th>Monto</th>
                         <th>Fecha Creación</th>
@@ -35,8 +31,16 @@
                         <td>{{r.creadoPor}}</td>
                         <td>{{r.fondeador.nombre}}</td>
                         <td>{{r.producto.cNomCod}}</td>
+                        <td>{{r.esMochila == 1 ? 'Sí' : 'No'}}</td>
                         <td>{{distinct(r.detalles, 'codigoFondeador').length}}</td>
-                        <td>{{formatMoney(r.detalles.map(x=>x.monto).reduce((a,b)=>parseFloat(a)+parseFloat(b)))}}</td>
+                        <td>
+                            <a v-if="r.esMochila" href="#" @@click="ir(r)">
+                                {{formatMoney(r.detalles.map(x=>x.monto).reduce((a,b)=>parseFloat(a)+parseFloat(b)))}}
+                            </a>
+                            <span v-if="!r.esMochila" >
+                                {{formatMoney(r.detalles.map(x=>x.monto).reduce((a,b)=>parseFloat(a)+parseFloat(b)))}}
+                            </span>
+                        </td>
                         <td>{{GetDate(r.creado)}}</td>
                         <td>{{GetDate(r.modificado)}}</td>
                         <td>{{r.fechaCierre == '0001-01-01T00:00:00' ? "No Cerrada" : GetDate(r.fechaCierre)}}</td>
@@ -50,7 +54,7 @@
                             <a href="#" @@click="getArchivos(r.pagoID)">Archivos</a>
                         </td>
                         <td>
-                            <a href="#" data-toggle="modal" data-target="#ConfirmarCierre" @@click="n = index">Confirmar</a>
+                            <a href="#" data-toggle="modal" data-target="#ConfirmarCierre" @@click="n = r">Confirmar</a>
                         </td>
                     </tr>
                 </tbody>
@@ -71,7 +75,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    ¿Estas seguro que deseas confirmar este pago?
+                    <p>¿Estas seguro que deseas confirmar este pago?</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -197,6 +201,9 @@
                 detalle: ""
             },
             methods: {
+                ir: function (p) {
+                    location.href = "@(ViewBag.domain+"Pagos/crear")" + "?PagoID=" + p.pagoID + "&fondeador=" + p.fondeador.fondeadorID + "&producto=" + p.producto.nValor + "&mochila=" + (p.esMochila ? 1 : 0) + "&monto=" + p.detalles.map(x => x.monto).reduce((a, b) => parseFloat(a) + parseFloat(b));
+                },
                 getArchivos: async function (pago) {
                     await fetch(this.api + "Reportes/GetPago?PagoID=" + pago)
                         .then((transfer) => {
@@ -216,9 +223,9 @@
                 formatMoney: function (num) {
                     return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                 },
-                confirmar: async function (index) {
-                    if (this.pagos[index].fechaCierre == '0001-01-01T00:00:00') {
-                        await fetch(this.api + "Pagos/Confirmar?pagoID=" + vm.pagos[index].pagoID);
+                confirmar: async function (pago) {
+                    if (pago.fechaCierre == '0001-01-01T00:00:00') {
+                        await fetch(this.api + "Pagos/Confirmar?pagoID=" + pago.pagoID);
                         window.location.href = '@(ViewBag.domain+"Pagos")';
                     }
                     else {
@@ -254,7 +261,7 @@
                 },
                 distinct: function (array, field) {
                     let fields = [... new Set(array.map(a => a[field]))];
-                    return fields;                    
+                    return fields;
                 }
             },
             computed: {
@@ -264,6 +271,10 @@
                 this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
                 this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
                 this.pagos = await fetch(this.api + "Pagos/All").then(x => x.json());
+
+                this.pagos.forEach(p => {
+                    p.montoAprobado = p.detalles.map(d => d.monto).reduce((a, b) => parseFloat(a) + parseFloat(b));
+                })
             }
         });
 

@@ -1,0 +1,620 @@
+﻿@{
+    ViewData["Title"] = "Crear Pago";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+    <div id="app">
+        <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+        <input type="hidden" id="domain" name="domain" value="@ViewBag.domain" />
+
+
+        <input type="hidden" id="PagoID" name="PagoID" value="@ViewBag.PagoID" />
+        <input type="hidden" id="fondeador" name="fondeador" value="@ViewBag.fondeador" />
+        <input type="hidden" id="producto" name="producto" value="@ViewBag.producto" />
+        <input type="hidden" id="mochila" name="mochila" value="@ViewBag.mochila" />
+        <input type="hidden" id="monto" name="monto" value="@ViewBag.monto" />
+
+        <div class="container">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label for="fondeador">Fondeador: </label>
+                        <input type="text" class="form-control" name="fondeador" id="fondeador" v-model="elFondeador" disabled />
+                        <label for="producto">Producto: </label>
+                        <input type="text" class="form-control" name="producto" id="producto" v-model="elProducto" disabled />
+                    </div>
+                    <div class="col-md-1">
+                        <label>Estados:</label>
+                        <div v-for="(estado,index) in estados">
+                            <input type="checkbox" :id="'estado' + index" :value="estado.valor" v-model="checkedEstados" @@change="changeEstados">
+                            <label :for="'estado' + index">{{estado.nombre}}</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="cuotasHasta">Cuotas hasta:</label>
+                        <input type="date" id="cuotasHasta" v-model="cuotasHasta" class="form-control" @@change="FiltrarFecha" />
+                    </div>
+                    <div class="col-md-5">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="suma" style="">Se pagará:</label>
+                        <input type="text" id="aPagarTotal" class="form-control" v-model="aPagarTotal" style="width:100%;" @@keyup="changeAPagarTotal" :disabled="cuotas.length == 0" />
+                        <button class="btn btn-primary" style="width:100%;margin-top:15px" @@click="guardar" :disabled="loaderCuotas">Guardar</button>
+                    </div>
+                </div>
+
+                <hr style="margin-top:10px;margin-bottom:10px" />
+
+
+                <div class="row">
+                    <div class="col-md-10" style="max-height:350px;overflow-y:auto">
+                        <div v-if="loaderCuotas" style="margin-top:5px">
+                            <p>
+                                <img src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
+                                <b>Buscado Cuotas...</b>
+                            </p>
+                        </div>
+                        <div v-if="cuotas.length != 0">
+
+                            <p>Total Saldos:<b> {{cuotas.length != 0 ? formatMoney(cuotas.map(x=>x.saldo).reduce((a,b)=>parseFloat(a)+parseFloat(b))) : 0}}</b></p>
+                            <table style="font-size:10pt" id="tablaCuotas" class="table table-sm table-hover table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Crédito</th>
+                                        <th scope="col">NroCuota</th>
+                                        <th scope="col">Fec.Vcto.</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col">Edo. Pago</th>
+                                        <th scope="col">Monto</th>
+                                        <th scope="col">Pagado</th>
+                                        <th scope="col">Saldo</th>
+                                        <th scope="col">A Pagar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="cuota in cuotas"
+                                        :class="{'table-danger': cuota.nEstadoCuota == 2, 'table-primary': cuota.nEstadoCuota == 1 }">
+                                        <th scope="row">{{cuota.codigoFondeador}}</th>
+                                        <th>{{cuota.nNroCuota}}</th>
+                                        <th>{{GetDate(cuota.dFecVcto)}}</th>
+                                        <td>{{NEstadoCuota(cuota.nEstadoCuota)}}</td>
+                                        <td>{{NEstado(cuota.nEstado)}}</td>
+                                        <td>{{formatMoney(cuota.nCuotaMensual)}}</td>
+                                        <td>{{formatMoney(cuota.pagado)}}</td>
+                                        <td>{{formatMoney(cuota.saldo)}}</td>
+                                        <td>{{formatMoney(cuota.aPagar)}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+                <div class="modal fade" id="confirmarGuardar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Confirmas que deseas guardar del pago de total <b>{{total}}</b>, integrado por las cuotas: </p>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Mensaje</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                {{mensaje}}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @section Scripts{
+
+                <script>
+                var vm = new Vue({
+                    el: '#app',
+                    data: {
+                        checkedCuotas: [],
+                        cuotas: [],
+                        mochila:false,
+                        loaderCuotas: false,
+                        loaderFondeador: false,
+                        loaderProducto: false,
+                        productos: [],
+                        fondeadores: [],
+                        api: "",
+                        domain:"",
+                        pagos: [],
+                        PagoID: 0,
+                        f: 1,
+                        mensaje: "",
+                        p: 2,
+                        total: 0,
+                        mensajeFondeadorProducto: "Debes seleccionar Fondeador y Producto antes de seleccionar",
+                        pago: {
+                            pagoID: "",
+                            fechaCreacion: "",
+                            fechaModificacion: "",
+                            fechaConfirmacion: "",
+                            monto: "",
+                            cuotas: [],
+                            confirmed: false
+                        },
+                        detalle: "",
+                        seleccionadoTodo: "",
+                        creditoDetallado: "",
+                        creditos: [],
+                        creditosFiltrados: [],
+                        credito: "",
+                        concof: false,
+                        query: "",
+                        encontrados: [],
+                        condisponible: true,
+                        fecha: new Date(),
+                        loaderCreditos: false,
+                        CreditosNoEncontrados: false,
+                        loaderCuotas: false,
+                        alertCuotasPorVencer: false,
+                        CheckedAll: false,
+                        estados: [
+                            {
+                                valor: 1,
+                                nombre: "Vigente"
+                            },
+                            {
+                                valor: 2,
+                                nombre: "Vencido"
+                            }
+                        ],
+                        cuotasHasta: moment().format("YYYY-MM-DD"),
+                        checkedEstados: [1, 2],
+                        aPagarTotal: 0,
+                        allChecked: false
+
+                    },
+                    methods: {
+                        changeAPagarTotal: function () {
+                            let monto = this.aPagarTotal;
+                            this.cuotas.forEach(e => {
+                                e.aPagar = 0;
+                            });
+
+                            for (var i = 0; i < this.cuotas.length; i++) {
+                                if (monto > 0) {
+                                    if (monto >= this.cuotas[i].saldo) {
+                                        monto -= this.cuotas[i].saldo;
+                                        this.cuotas[i].aPagar = this.cuotas[i].saldo
+                                    } else {
+                                        this.cuotas[i].aPagar = monto;
+                                        monto = 0;
+                                    }
+                                }
+                                else
+                                    break;
+                            }
+                        },
+                        ChangeChecked: async function () {
+                            let faltantes = []
+                            this.loaderCuotas = true;
+
+                            if (vm.cuotas.length == 0 && vm.checkedCreditos.length != 0)
+                                faltantes = vm.checkedCreditos
+                            else {
+                                vm.checkedCreditos.forEach(e => {
+                                    if (!vm.cuotas.map(a => a.codigoFondeador).includes(e)) {
+                                        faltantes.push(e);
+                                    }
+                                })
+                            }
+
+
+
+                            var formData = new FormData();
+                            formData.append('buscar', faltantes.join(','));
+
+                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                method: 'POST',
+                                body: formData
+                            }).then(x=>x.json())
+
+                            cuotasRes.forEach(x => {
+                                x.saldo = x.nCuotaMensual - x.pagado;
+                                x.aPagar = 0;
+                            });
+
+                            cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                            this.creditos.forEach(c => {
+                                let d = c.disponible;
+                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                    if (d >= cu.saldo) {
+                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                        d = d - cu.saldo;
+                                    }
+                                    else {
+                                        cu.aPagar = parseFloat(d.toFixed(2));
+                                        d = 0;
+                                    }
+                                });
+                            });
+                            this.loaderCuotas = false;
+                        },
+                        verCuotas: async function (event, credito) {
+                            $(event.target).parent("tr").siblings().removeClass("table-primary");
+                            $(event.target).parent("tr").addClass("table-primary");
+
+                            this.loaderCuotas = true;
+
+                            var formData = new FormData();
+                            formData.append('buscar', credito.codigoFondeador);
+
+                            if (this.mochila) {
+                                formData.append('cuotasHasta', $("#cuotasHasta").val());
+                                formData.append('estados', this.checkedEstados.join(','));
+                            }
+                            else {
+                                formData.append('cuotasHasta', '01-01-1999');
+                                formData.append('estados', '0');
+                            }
+
+                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                method: 'POST',
+                                body: formData
+                            }).then(x=>x.json());
+
+
+                            if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
+                                cuotasRes.forEach(x => {
+                                    x.saldo = x.nCuotaMensual - x.pagado;
+                                    x.aPagar = 0;
+                                });
+
+                                cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                                this.creditos.forEach(c => {
+                                    let d = c.disponible;
+                                    vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                        if (d >= cu.saldo) {
+                                            cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                            d = d - cu.saldo;
+                                        }
+                                        else {
+                                            cu.aPagar = parseFloat(d.toFixed(2));
+                                            d = 0;
+                                        }
+                                    });
+                                });
+                            }
+
+                            this.loaderCuotas = false;
+
+                            this.credito = credito;
+                        },
+                        changeAPagar: function (codigo, cuota, evento) {
+                            let valor = $(evento.target).val();
+                            let suma = this.cuotas
+                                .cuotas.filter(y => y.codigoFondeador == codigo && y.nNroCuota != cuota)
+                                .map(z => z.aPagar)
+                                .reduce((a, b) => parseFloat(a) + parseFloat(b)) + parseFloat(valor);
+
+                            if (suma > this.creditos.find(y => y.codigoFondeador == codigo).disponible) {
+                                event.target.value = this.cuotas.find(y => y.codigoFondeador == codigo && y.nNroCuota == cuota).aPagar;
+                                this.mensaje = "El monto suma en total, una cantidad mayor al disponible por este crédito.";
+                                $("#modalMensaje").modal("show");
+                            }
+                            else {
+                                this.cuotas.find(y => y.codigoFondeador == codigo && y.nNroCuota == cuota).aPagar = valor;
+                            }
+                        },
+                        FiltrarFecha: async function () {
+                            this.cuotas = [];
+                            await this.mainSearch();
+                        },
+                        changeEstado: async function () {
+
+                            await this.mainSearch();
+                        },
+                        Buscar: function () {
+                            this.encontrados = [];
+
+                            this.query.split("\n").forEach(query => {
+                                var search = new RegExp(query.trim().toUpperCase(), 'i');
+                                var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
+
+                                if (res != undefined) {
+                                    if (this.creditosFiltrados.filter(x => x.codigoFondeador == res.codigoFondeador).length == 0) {
+                                        this.mensaje = "El resultado hallado no pertenece a este fondeador, producto o " + (vm.condisponible ? "no tiene monto disponible" : "tiene disponible");
+                                        $("#modalMensaje").modal("show");
+                                    } else {
+                                        this.encontrados.push(res)
+                                    }
+                                }
+                                else {
+                                    this.mensaje = "No se hallaron resultados";
+                                    $("#modalMensaje").modal("show");
+                                }
+                            });
+                        },
+                        formatMoney: function (num) {
+                            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        },
+                        GetDate: function (strDate) {
+                            return moment(strDate).format("DD-MM-YYYY");
+                        },
+                        sumatoria: function () {
+                            let res = 0;
+                            this.cuotasFiltradas.filter(x => x.selected).forEach(x => {
+                                res += x.aPagar;
+                            });
+                            this.total = res;
+                        },
+                        vigente: function (fecha) {
+                            return fecha.getMonth() == (new Date()).getMonth();
+                        },
+                        formatDate: function (fecha) {
+                            return moment(fecha).format("DD/MM/YYYY");
+                        },
+                        guardar: async function () {
+                            var aux = vm.cuotas
+                                .filter(x => x.aPagar != 0);
+                            var pagos = aux.map(x => {
+                                var joined = [];
+                                joined.push(x.codigoFondeador);
+                                joined.push(x.nNroCuota);
+                                joined.push(parseFloat(x.aPagar));
+                                joined.push(false)
+
+                                return joined.join(",")
+                            });
+                            var detalles = pagos;
+
+                            var formData = new FormData();
+                            formData.append('pagoID', this.PagoID);
+                            formData.append('FondeadorID', vm.f);
+                            formData.append('ProductoID', vm.p);
+                            formData.append('Creador', JSON.parse(localStorage.getItem("usuario")).nombre);
+                            formData.append('Pagos', detalles.join(";"));
+                            formData.append('EsMochila', true);
+
+                            let res = await fetch(this.api + "Pagos/Save", {
+                                method: 'POST',
+                                body: formData
+                            }).then(response => response.json());
+
+                            window.location.href = '@(ViewBag.domain+"Pagos")';
+                        },
+                        random: function (min, max) {
+                            return Math.floor(Math.random() * max) + min;
+                        },
+                        NEstadoCuota: function (estadoCuota) {
+                            switch (estadoCuota) {
+                                case 1:
+                                    return "Vigente";
+                                case 2:
+                                    return "Vencido";
+                                case 3:
+                                    return "Por Vencer";
+                            }
+                        },
+                        NEstado: function (estadoCuota) {
+                            switch (estadoCuota) {
+                                case 0:
+                                    return "Sin Pagar";
+                                case 2:
+                                    return "Pagada";
+                            }
+                        },
+                        Filtrar: function () {
+                            this.creditosFiltrados = []
+                            vm.cuotas = [];
+                            vm.checkedCreditos = [];
+
+                            if (this.mochila) {
+                                this.condisponible = false;
+                                if (this.condisponible)
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible != 0 && x.id == undefined);
+                                else
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible == 0 && x.id == undefined);
+
+                                this.creditosFiltrados
+                            } else {
+                                if (this.condisponible)
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible != 0 && x.id != undefined);
+                                else
+                                    this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f && x.disponible == 0 && x.id != undefined);
+
+                                this.creditosFiltrados
+                            }
+
+
+                            if (this.creditosFiltrados.length == 0)
+                                this.CreditosNoEncontrados = true;
+                            else
+                                this.CreditosNoEncontrados = false;
+
+
+
+                        },
+                        mainSearch: async function () {
+                            this.loaderCuotas = true;
+
+                            var formData = new FormData();
+                            formData.append('buscar', '');
+                            formData.append('cuotasHasta', $("#cuotasHasta").val());
+                            formData.append('estados', this.checkedEstados.join(','));
+
+                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                method: 'POST',
+                                body: formData
+                            }).then(x => x.json());
+
+                            cuotasRes.forEach(x => {
+                                x.aPagar = 0;
+                                x.saldo = x.nCuotaMensual - x.pagado;
+                            });
+
+                            vm.cuotas = cuotasRes;
+
+                            this.aPagarTotal = $("#monto").val();
+                            this.changeAPagarTotal();
+
+                            this.loaderCuotas = false;
+                        },
+                        CheckAll: function () {
+                            if (this.allChecked) {
+                                vm.checkedCuotas = [];
+                                this.cuotas.forEach(cuota => {
+                                    vm.checkedCuotas.push([cuota.codigoFondeador, cuota.nNroCuota, cuota.aPagar].join('/'));
+                                });
+                            }
+                            else
+                                vm.checkedCuotas = [];
+                        },
+                        BuscarCuotasPorVencer: async function () {
+                            let codigoFondeador = vm.credito.codigoFondeador;
+
+                            let desde = $("#desde").val();
+                            let hasta = $("#hasta").val();
+
+                            var formData = new FormData();
+                            formData.append('pagosDesde', desde);
+                            formData.append('pagosHasta', hasta);
+                            formData.append('codigoFondeador', codigoFondeador);
+
+                            this.loaderCuotas = true;
+
+                            let cuotas = await fetch(this.api + "Cuotas/GetCuotasPorVencer", {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => response.json());
+
+                            this.loaderCuotas = false;
+
+                            if (cuotas.length == 0) {
+                                this.alertCuotasPorVencer = true;
+                                return;
+                            }
+
+                            cuotas.forEach(x => {
+                                x.saldo = x.nCuotaMensual - x.pagado;
+                                x.aPagar = 0;
+                            });
+
+                            this.creditos.find(x=>x.codigoFondeador == codigoFondeador).cuotas
+
+                            console.log(cuotas);
+
+                            cuotas.forEach(c => {
+                                vm.cuotas.push(c);
+                                vm.creditos.find(x => x.codigoFondeador == vm.credito.codigoFondeador).cuotas.push(c);
+                                vm.creditos.find(x => x.codigoFondeador == codigoFondeador).disponible = null ? vm.cuotas.filter(z => z.codigoFondeador == codigoFondeador).map(d => d.saldo).reduce((a, b) => parseFloat(a) + parseFloat(b)) : vm.cuotas.filter(z => z.codigoFondeador == codigoFondeador).map(x => x.disponible)[0]
+                            });
+
+
+                            this.creditos.forEach(c => {
+                                let d = c.disponible;
+                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                    if (d >= cu.saldo) {
+                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                        d = d - cu.saldo;
+                                    }
+                                    else {
+                                        cu.aPagar = parseFloat(d.toFixed(2));
+                                        d = 0;
+                                    }
+                                });
+                            });
+
+                        },
+                        changeEstados: async function () {
+                            this.cuotas = [];
+                            await this.mainSearch();
+                        }
+                    },
+                    computed: {
+                        elFondeador: function () {
+                            if (this.fondeadores.length == 0)
+                                return "";
+                            else
+                                return this.fondeadores.find(x => x.fondeadorID == this.f).nombre
+                        },
+                        elProducto: function () {
+                            if (this.productos.length == 0)
+                                return "";
+                            else
+                                return this.productos.find(x => x.nValor == this.p).cNomCod
+                        }
+                    },
+                    async mounted() {
+                        this.api = $("#endpoint").val();
+                        this.domain = $("#domain").val();
+
+                        this.PagoID = $("#PagoID").val();
+                        this.f = $("#fondeador").val();
+                        this.p = $("#producto").val();
+                        this.mochila = $("#mochila").val() == 1 ? true : false;
+
+                        $("#desde").val(moment().subtract(1, 'months').format("YYYY-MM-DD"));
+                        $("#hasta").val(moment().format("YYYY-MM-DD"));
+                        $("#cuotasHasta").val(moment().format("YYYY-MM-DD"));
+
+                        this.loaderFondeador = true;
+                        this.loaderProducto = true;
+
+                        fetch(this.api + "Fondeador/All")
+                            .then(x => x.json())
+                            .then(res => {
+                                vm.fondeadores = res;
+                                vm.loaderFondeador = false;
+                            });
+
+                        fetch(this.api + "Producto/All")
+                            .then(x => x.json())
+                            .then(res => {
+                                vm.productos = res;
+                                vm.loaderProducto = false;
+                            });
+
+                        this.mainSearch();
+
+                        $('#alertaNoHayCreditos').on('closed.bs.alert', function () {
+                            this.CreditosNoEncontrados = false;
+                        })
+                        $('#alertCuotasPorVencer').on('closed.bs.alert', function () {
+                            this.alertCuotasPorVencer = false;
+                        })
+
+
+                    }
+                });
+
+                </script>
+
+            }
