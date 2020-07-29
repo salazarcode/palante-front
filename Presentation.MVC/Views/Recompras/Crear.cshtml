@@ -136,7 +136,16 @@
 
                             <tr>
                                 <th scope="row">Cuotas Vencidas y vigente No Pagadas</th>
-                                <td>{{formatMoney(credito.cuotasVencidasVigenteSinPagar) || 0}}</td>
+                                <td>
+
+                                    <b>{{formatMoney(ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia) || 0}}</b>
+                                    <input type="checkbox"
+                                           data-toggle="tooltip" data-placement="top" title="Con Periodo de Gracia"
+                                           id="checkConPeriodoGracia"
+                                           v-model="ConPeriodoGracia"
+                                           @@change="CalcularDiario(credito)"
+                                           style="width: 15px;height:15px;float:right">
+                                </td>
                             </tr>
 
                             <tr>
@@ -232,12 +241,13 @@
                         query: "",
                         encontrados: [],
                         fechaCalculo: moment().format("YYYY-MM-DD"),
-                        mensaje:""
+                        mensaje: "",
+                        ConPeriodoGracia:true
                     },
                     methods: {
                         CalcularDiario: function (credito) {
                             credito.precioRecompra = 0;
-                            credito.precioRecompra += parseFloat(credito.cuotasVencidasVigenteSinPagar);
+                            credito.precioRecompra += parseFloat(this.ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia);
                             credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
                             credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
                         },
