@@ -35,13 +35,16 @@
                         </label>
                     </div>
                 </div>
+                <div class="col-md-2">
+                    <label for="desde"><b>Disponible desde - hasta:</b></label>
+                    <input type="date" class="form-control" id="desde" v-model="desde" @@change="FiltrarFecha" />
+
+                    <input type="date" class="form-control" id="hasta" v-model="hasta" @@change="FiltrarFecha" />
+                </div>
                 <div class="col-md-3">
                     <label for="desde"><b>Búsqueda ({{ query.trim() != 0 ? query.split("\n").length : 0}}):</b></label>
                     <textarea class="form-control" style="height:65px;width:100%" v-model="query" @@keyup="changeQuery">{{query}}</textarea>
 
-
-
-                    @*<button type="button" class="btn btn-success btn-sm" style="margin-top:10px" @@click="Buscar">Buscar</button>*@
 
                     <button :class="{'btn':true, 'btn-success':!loaderCuotas, 'btn-warning':loaderCuotas}"
                             style="width:100%;margin-top:10px"
@@ -50,12 +53,6 @@
                         {{loaderCuotas ? "Cargando Cuotas" : "Buscar"}}
                         <img v-if="loaderCuotas" src="~/img/loader.gif" height="15" width="15" alt="Loader image" />
                     </button>
-                </div>
-                <div class="col-md-2">
-                    <label for="desde"><b>Disponible desde - hasta:</b></label>
-                    <input type="date" class="form-control" id="desde" value="" @@change="FiltrarFecha" />
-
-                    <input type="date" class="form-control" id="hasta" value="" @@change="FiltrarFecha" />
                 </div>
 
 
@@ -67,7 +64,18 @@
                     <label for="suma" style="">Pago Total:</label>
                     <input type="text" id="suma" class="form-control" :value="suma" style="width:100%;" :disabled="true" />
 
-                    <button class="btn btn-primary" style="width:100%;margin-top:15px" @@click="guardar" :disabled="loaderCuotas">Guardar</button>
+                    @*<button class="btn btn-primary"
+            style="width:100%;margin-top:15px"
+            @@click="guardar"
+            :disabled="loaderCuotas">Guardar</button>*@
+
+                    <button class="btn btn-success"
+                            style="width:100%;margin-top:15px"
+                            @@click="guardar($event)"
+                            :disabled="loaderGuardar">
+                        {{loaderGuardar ? "Guardando..." : "Guardar"}}
+                        <img v-if="loaderGuardar" src="~/img/loader.gif" height="15" width="15" alt="Loader image" />
+                    </button>
                 </div>
             </div>
 
@@ -309,6 +317,7 @@
                         cuotas: [],
                         mochila:false,
                         loaderCuotas: false,
+                        loaderGuardar: false,
                         loaderFondeador: false,
                         loaderProducto: false,
                         productos: [],
@@ -360,7 +369,9 @@
                             }
                         ],
                         cuotasHasta: moment().format("YYYY-MM-DD"),
-                        checkedEstados: []
+                        checkedEstados: [],
+                        desde: "",
+                        hasta: ""
 
                     },
                     methods: {
@@ -493,70 +504,76 @@
                             await this.mainSearch();
                         },
                         Buscar: async function () {
-                            this.encontrados = [];
-                            let excluidos = [];
-                            this.query.split("\n").forEach(query => {
-                                var search = new RegExp(query.trim().toUpperCase(), 'i');
-                                var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
-                                console.log(res.fondeador, res.nSubProd, res.codigoFondeador);
+                            if ($("#desde").val() != "" && $("#hasta").val() != "") {
 
-                                if (res != undefined) {
-                                    if (this.creditosFiltrados.filter(x => x.codigoFondeador == res.codigoFondeador).length == 0) {
-                                        excluidos.push(query)
-                                    } else {
-                                        this.encontrados.push(res)
+                                this.encontrados = [];
+                                let excluidos = [];
+                                this.query.split("\n").forEach(query => {
+                                    var search = new RegExp(query.trim().toUpperCase(), 'i');
+                                    var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
+
+                                    if (res != undefined) {
+                                        if (this.creditosFiltrados.filter(x => x.codigoFondeador == res.codigoFondeador).length == 0) {
+                                            excluidos.push(query)
+                                        } else {
+                                            this.encontrados.push(res)
+                                        }
                                     }
+                                    else {
+                                        this.mensaje = "No se hallaron resultados";
+                                        $("#modalMensaje").modal("show");
+                                    }
+                                });
+
+                                if (this.encontrados.length != 0) {
+
+                                    this.loaderCuotas = true;
+
+                                    var formData = new FormData();
+                                    formData.append('buscar', this.encontrados.map(x => x.codigoFondeador).join(","));
+                                    formData.append('cuotasHasta', '01-01-1999');
+                                    formData.append('estados', '0');
+
+                                    let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                        method: 'POST',
+                                        body: formData
+                                    }).then(x => x.json());
+
+
+                                    if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
+                                        cuotasRes.forEach(x => {
+                                            x.saldo = x.nCuotaMensual - x.pagado;
+                                            x.aPagar = 0;
+                                        });
+
+                                        cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                                        this.creditos.forEach(c => {
+                                            let d = c.disponible;
+                                            vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                                if (d >= cu.saldo) {
+                                                    cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                                    d = d - cu.saldo;
+                                                }
+                                                else {
+                                                    cu.aPagar = parseFloat(d.toFixed(2));
+                                                    d = 0;
+                                                }
+                                            });
+                                        });
+                                    }
+
+                                    this.loaderCuotas = false;
+
                                 }
-                                else {
-                                    this.mensaje = "No se hallaron resultados";
+                                if (excluidos.length != 0) {
+                                    this.mensaje = "No se hallaron los siguientes créditos: ";
+                                    this.lista = excluidos;
                                     $("#modalMensaje").modal("show");
                                 }
-                            });
-
-                            if (this.encontrados.length != 0) {
-
-                                this.loaderCuotas = true;
-
-                                var formData = new FormData();
-                                formData.append('buscar', this.encontrados.map(x=>x.codigoFondeador).join(","));
-                                formData.append('cuotasHasta', '01-01-1999');
-                                formData.append('estados', '0');
-
-                                let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
-                                    method: 'POST',
-                                    body: formData
-                                }).then(x => x.json());
-
-
-                                if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
-                                    cuotasRes.forEach(x => {
-                                        x.saldo = x.nCuotaMensual - x.pagado;
-                                        x.aPagar = 0;
-                                    });
-
-                                    cuotasRes.forEach(x => vm.cuotas.push(x));
-
-                                    this.creditos.forEach(c => {
-                                        let d = c.disponible;
-                                        vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
-                                            if (d >= cu.saldo) {
-                                                cu.aPagar = parseFloat(cu.saldo.toFixed(2));
-                                                d = d - cu.saldo;
-                                            }
-                                            else {
-                                                cu.aPagar = parseFloat(d.toFixed(2));
-                                                d = 0;
-                                            }
-                                        });
-                                    });
-                                }
-
-                                this.loaderCuotas = false;
-
                             }
-                            if (excluidos.length != 0) {
-                                this.mensaje = "No se hallaron los siguientes créditos: ";
-                                this.lista = excluidos;
+                            else {
+                                this.mensaje = "Define las fechas desde y hasta";
                                 $("#modalMensaje").modal("show");
                             }
                         },
@@ -579,13 +596,22 @@
                         formatDate: function (fecha) {
                             return moment(fecha).format("DD/MM/YYYY");
                         },
-                        guardar: async function () {
+                        guardar: async function (event) {
+
+                            this.loaderGuardar = false;
+
+                            $(event.target).prop("disabled", true);
+                            $(event.target).removeClass("btn-primary");
+                            $(event.target).addClass("btn-warning");
+
+
                             var aux = vm.cuotas
                                 .filter(x => vm.creditosFiltrados
                                     .filter(e => vm.checkedCreditos.includes(e.codigoFondeador))
                                     .map(c => c.codigoFondeador)
                                     .includes(x.codigoFondeador) && x.aPagar != 0 && x.aPagar != '');
-                            var pagos = aux.map(x => {
+
+                            var detalles = aux.map(x => {
                                 var joined = [];
                                 joined.push(x.codigoFondeador);
                                 joined.push(x.nNroCuota);
@@ -594,34 +620,28 @@
 
                                 return joined.join(",")
                             });
-                            /*
-                            var deudas = aux.filter(e => e.cuentaPorCobrar != 0).map(x => {
-                                var joined = [];
-                                joined.push(x.nCodCred);
-                                joined.push(x.nNroCalendario);
-                                joined.push(x.nNroCuota);
-                                joined.push(parseFloat(x.cuentaPorCobrar));
-                                joined.push(true)
 
-                                return joined.join(",")
-                            });
-                            */
+                            let concat = detalles.join(";");
 
-                            var detalles = pagos;
-                            //deudas.forEach(x => detalles.push(x));
-
+                            this.loaderGuardar = true;
                             var formData = new FormData();
                             formData.append('pagoID', 0);
                             formData.append('FondeadorID', vm.f);
                             formData.append('ProductoID', vm.p);
                             formData.append('Creador', JSON.parse(localStorage.getItem("usuario")).nombre);
-                            formData.append('Pagos', detalles.join(";"));
+                            formData.append('Pagos', concat);
                             formData.append('EsMochila', false);
 
                             let res = await fetch(this.api + "Pagos/Save", {
                                 method: 'POST',
                                 body: formData
                             }).then(response => response.json());
+
+                            this.loaderGuardar = false;
+
+                            $(event.target).prop("disabled", false);
+                            $(event.target).removeClass("btn-warning");
+                            $(event.target).addClass("btn-primary");
 
                             window.location.href = '@(ViewBag.domain+"Pagos")';
                         },
@@ -678,43 +698,24 @@
 
                         },
                         mainSearch: async function () {
-                            let desde = $("#desde").val();
-                            let hasta = $("#hasta").val();
+                            if ($("#desde").val() != "" && $("#hasta").val() != "") {
+                                var formData = new FormData();
+                                formData.append('desde', this.desde);
+                                formData.append('hasta', this.hasta);
 
-                            var formData = new FormData();
-                            formData.append('desde', desde);
-                            formData.append('hasta', hasta);
+                                this.loaderCreditos = true;
+                                let creditosRes = await fetch(this.api + "Creditos/CreditosFondeador", {
+                                    method: 'POST',
+                                    body: formData
+                                })
+                                    .then(response => response.json());
 
-                            this.loaderCreditos = true;
-                            let creditosRes = await fetch(this.api + "Creditos/CreditosFondeador", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then(response => response.json());
+                                vm.creditos = creditosRes;
 
-                            vm.creditos = creditosRes;
+                                this.loaderCreditos = false;
 
-                            this.loaderCreditos = false;
-
-                            this.Filtrar();
-
-                            /*
-
-
-                            this.creditos.forEach(c => {
-                                let d = c.disponible;
-                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
-                                    if (d >= cu.saldo) {
-                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
-                                        d = d - cu.saldo;
-                                    }
-                                    else {
-                                        cu.aPagar = parseFloat(d.toFixed(2));
-                                        d = 0;
-                                    }
-                                });
-                            });    */
-
+                                this.Filtrar();
+                            }
                         },
                         CheckAll: function () {
                             if (!this.CheckedAll)
@@ -765,8 +766,6 @@
                             });
 
                             this.creditos.find(x=>x.codigoFondeador == codigoFondeador).cuotas
-
-                            console.log(cuotas);
 
                             cuotas.forEach(c => {
                                 vm.cuotas.push(c);
@@ -826,9 +825,10 @@
                         this.p = $("#producto").val();
                         this.mochila = $("#mochila").val() == 1 ? true : false;
 
-
+                        /*
                         $("#desde").val(moment().subtract(1, 'months').format("YYYY-MM-DD"));
                         $("#hasta").val(moment().format("YYYY-MM-DD"));
+                        */
                         $("#cuotasHasta").val(moment().format("YYYY-MM-DD"));
 
                         this.loaderFondeador = true;
