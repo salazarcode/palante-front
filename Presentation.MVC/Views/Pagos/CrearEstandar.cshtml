@@ -604,14 +604,13 @@
                             $(event.target).removeClass("btn-primary");
                             $(event.target).addClass("btn-warning");
 
+                            let creditos = vm.creditosFiltrados
+                                .filter(e => vm.checkedCreditos.includes(e.codigoFondeador))
+                                .map(s => s.codigoFondeador);
 
-                            var aux = vm.cuotas
-                                .filter(x => vm.creditosFiltrados
-                                    .filter(e => vm.checkedCreditos.includes(e.codigoFondeador))
-                                    .map(c => c.codigoFondeador)
-                                    .includes(x.codigoFondeador) && x.aPagar != 0 && x.aPagar != '');
+                            let cuotas = vm.cuotas.filter(cu => creditos.includes(cu.codigoFondeador) && cu.aPagar != 0 && cu.aPagar != '');
 
-                            var detalles = aux.map(x => {
+                            var detalles = cuotas.map(x => {
                                 var joined = [];
                                 joined.push(x.codigoFondeador);
                                 joined.push(x.nNroCuota);
