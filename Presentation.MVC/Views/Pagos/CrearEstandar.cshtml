@@ -20,7 +20,7 @@
                     <label for="producto">Producto: </label>
                     <input type="text" class="form-control" name="producto" id="producto" v-model="elProducto" disabled />
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <p><b>Disponible:</b></p>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="condisponible" id="disponiblesi" :value="true" v-model="condisponible" @@change="Filtrar" checked>
@@ -35,10 +35,21 @@
                         </label>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label for="desde"><b>Búsqueda:</b></label>
-                    <textarea class="form-control" style="height:65px;width:100%" v-model="query">{{query}}</textarea>
-                    <button type="button" class="btn btn-success btn-sm" style="margin-top:10px" @@click="Buscar">Buscar</button>
+                <div class="col-md-3">
+                    <label for="desde"><b>Búsqueda ({{ query.trim() != 0 ? query.split("\n").length : 0}}):</b></label>
+                    <textarea class="form-control" style="height:65px;width:100%" v-model="query" @@keyup="changeQuery">{{query}}</textarea>
+
+
+
+                    @*<button type="button" class="btn btn-success btn-sm" style="margin-top:10px" @@click="Buscar">Buscar</button>*@
+
+                    <button :class="{'btn':true, 'btn-success':!loaderCuotas, 'btn-warning':loaderCuotas}"
+                            style="width:100%;margin-top:10px"
+                            @@click="Buscar"
+                            :disabled="loaderCuotas">
+                        {{loaderCuotas ? "Cargando Cuotas" : "Buscar"}}
+                        <img v-if="loaderCuotas" src="~/img/loader.gif" height="15" width="15" alt="Loader image" />
+                    </button>
                 </div>
                 <div class="col-md-2">
                     <label for="desde"><b>Disponible desde - hasta:</b></label>
@@ -55,6 +66,7 @@
                 <div class="col-md-2">
                     <label for="suma" style="">Pago Total:</label>
                     <input type="text" id="suma" class="form-control" :value="suma" style="width:100%;" :disabled="true" />
+
                     <button class="btn btn-primary" style="width:100%;margin-top:15px" @@click="guardar" :disabled="loaderCuotas">Guardar</button>
                 </div>
             </div>
@@ -83,11 +95,19 @@
                     </div>
 
                     <div v-if="encontrados.length != 0">
-                        <p>Resultado de búsqueda. <a href="#" @@click="encontrados = []">Limpiar búsqueda</a></p>
+                        <p>Resultado de búsqueda ({{encontrados.length}}). <a href="#" @@click="encontrados = []">Limpiar búsqueda</a></p>
                         <table id="tablaCreditos" style="font-size:10pt" class="table table-success table-sm table-hover table-bordered">
                             <thead>
                                 <tr>
-                                    <th scope="col">Check</th>
+                                    <th scope="col">
+                                        <input type="checkbox"
+                                               id="CheckAllEncontrados"
+                                               v-model="CheckedAllEncontrados"
+                                               @@change="ChangeCheckedEncontrados"
+                                               :disabled="loaderCuotas"
+                                               >
+
+                                    </th>
                                     <th scope="col">CodigoFondeador</th>
                                     <th scope="col">ID</th>
                                     <th scope="col">Nombre</th>
@@ -100,7 +120,8 @@
                                         <input type="checkbox"
                                                :value="credito.codigoFondeador"
                                                v-model="checkedCreditos"
-                                               @@change="ChangeChecked">
+                                               @@change="ChangeChecked"                                               
+                                               :disabled="loaderCuotas">
                                     </th>
                                     <th>{{credito.codigoFondeador}}</th>
                                     <th>{{credito.id || ''}}</th>
@@ -111,7 +132,7 @@
                         </table>
                     </div>
 
-
+                    <p>Créditos: <b>{{creditosFiltrados.length}}</b></p>
                     <table v-if="creditosFiltrados.length != 0" id="tablaCreditos" style="font-size:10pt" class="table table-sm table-hover table-bordered">
                         <thead>
                             <tr>
@@ -120,7 +141,8 @@
                                            id="CheckAll"
                                            @@click="CheckAll"
                                            v-model="CheckedAll"
-                                           @@change="ChangeChecked">
+                                           @@change="ChangeChecked"
+                                               :disabled="loaderCuotas">
                                 </th>
                                 <th scope="col">CodigoFondeador</th>
                                 <th scope="col">ID</th>
@@ -133,7 +155,8 @@
                                 <th scope="row">
                                     <input type="checkbox"
                                            :value="credito.codigoFondeador"
-                                           v-model="checkedCreditos">
+                                           v-model="checkedCreditos"
+                                               :disabled="loaderCuotas">
                                 </th>
                                 <th scope="row">{{credito.codigoFondeador}}</th>
                                 <th scope="row">{{credito.id || ''}}</th>
@@ -263,6 +286,10 @@
                         </div>
                         <div class="modal-body">
                             {{mensaje}}
+                            <hr />
+                            <ol>
+                                <li v-for="item in lista">{{item}}</li>
+                            </ol>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -312,6 +339,7 @@
                         credito: "",
                         concof: false,
                         query: "",
+                        lista: [],
                         encontrados: [],
                         condisponible: true,
                         fecha: new Date(),
@@ -320,6 +348,7 @@
                         loaderCuotas: false,
                         alertCuotasPorVencer: false,
                         CheckedAll: false,
+                        CheckedAllEncontrados: false,
                         estados: [
                             {
                                 valor: 1,
@@ -335,9 +364,16 @@
 
                     },
                     methods: {
+                        changeQuery: function () {
+                            let arr = this.query.split('\n');
+                            arr.forEach((item, index) => {
+                                if (item.trim() == "")
+                                    arr.splice(index, 1);
+                            });
+                            this.query = arr.join("\n");
+                        },
                         ChangeChecked: async function () {
                             let faltantes = []
-                            this.loaderCuotas = true;
 
                             if (vm.cuotas.length == 0 && vm.checkedCreditos.length != 0)
                                 faltantes = vm.checkedCreditos
@@ -349,63 +385,19 @@
                                 })
                             }
 
-
-
-                            var formData = new FormData();
-                            formData.append('buscar', faltantes.join(','));
-
-                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
-                                method: 'POST',
-                                body: formData
-                            }).then(x=>x.json())
-
-                            cuotasRes.forEach(x => {
-                                x.saldo = x.nCuotaMensual - x.pagado;
-                                x.aPagar = 0;
-                            });
-
-                            cuotasRes.forEach(x => vm.cuotas.push(x));
-
-                            this.creditos.forEach(c => {
-                                let d = c.disponible;
-                                vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
-                                    if (d >= cu.saldo) {
-                                        cu.aPagar = parseFloat(cu.saldo.toFixed(2));
-                                        d = d - cu.saldo;
-                                    }
-                                    else {
-                                        cu.aPagar = parseFloat(d.toFixed(2));
-                                        d = 0;
-                                    }
-                                });
-                            });
-                            this.loaderCuotas = false;
-                        },
-                        verCuotas: async function (event, credito) {
-                            $(event.target).parent("tr").siblings().removeClass("table-primary");
-                            $(event.target).parent("tr").addClass("table-primary");
-
-                            this.loaderCuotas = true;
-
-                            var formData = new FormData();
-                            formData.append('buscar', credito.codigoFondeador);
-
-                            if (this.mochila) {
-                                formData.append('cuotasHasta', $("#cuotasHasta").val());
-                                formData.append('estados', this.checkedEstados.join(','));
-                            }
-                            else {
+                            if (faltantes.length != 0) {
+                                var formData = new FormData();
+                                formData.append('buscar', faltantes.join(','));
                                 formData.append('cuotasHasta', '01-01-1999');
                                 formData.append('estados', '0');
-                            }
 
-                            let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
-                                method: 'POST',
-                                body: formData
-                            }).then(x=>x.json());
+                                this.loaderCuotas = true;
+                                let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                    method: 'POST',
+                                    body: formData
+                                }).then(x => x.json())
+                                this.loaderCuotas = false;
 
-
-                            if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
                                 cuotasRes.forEach(x => {
                                     x.saldo = x.nCuotaMensual - x.pagado;
                                     x.aPagar = 0;
@@ -428,7 +420,49 @@
                                 });
                             }
 
-                            this.loaderCuotas = false;
+                        },
+                        verCuotas: async function (event, credito) {
+                            $(event.target).parent("tr").siblings().removeClass("table-primary");
+                            $(event.target).parent("tr").addClass("table-primary");
+
+                            if (vm.cuotas.filter(cu => cu.codigoFondeador == credito.codigoFondeador).length == 0) {
+                                this.loaderCuotas = true;
+
+                                var formData = new FormData();
+                                formData.append('buscar', credito.codigoFondeador);
+                                formData.append('cuotasHasta', '01-01-1999');
+                                formData.append('estados', '0');
+
+                                let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                    method: 'POST',
+                                    body: formData
+                                }).then(x => x.json());
+
+                                if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
+                                    cuotasRes.forEach(x => {
+                                        x.saldo = x.nCuotaMensual - x.pagado;
+                                        x.aPagar = 0;
+                                    });
+
+                                    cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                                    this.creditos.forEach(c => {
+                                        let d = c.disponible;
+                                        vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                            if (d >= cu.saldo) {
+                                                cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                                d = d - cu.saldo;
+                                            }
+                                            else {
+                                                cu.aPagar = parseFloat(d.toFixed(2));
+                                                d = 0;
+                                            }
+                                        });
+                                    });
+                                }
+
+                                this.loaderCuotas = false;
+                            }
 
                             this.credito = credito;
                         },
@@ -458,17 +492,17 @@
 
                             await this.mainSearch();
                         },
-                        Buscar: function () {
+                        Buscar: async function () {
                             this.encontrados = [];
-
+                            let excluidos = [];
                             this.query.split("\n").forEach(query => {
                                 var search = new RegExp(query.trim().toUpperCase(), 'i');
                                 var res = this.creditos.find(x => search.test(x.codigoFondeador) || search.test(x.nombres) || search.test(x.id) || search.test(x.nCodCred.toString()));
+                                console.log(res.fondeador, res.nSubProd, res.codigoFondeador);
 
                                 if (res != undefined) {
                                     if (this.creditosFiltrados.filter(x => x.codigoFondeador == res.codigoFondeador).length == 0) {
-                                        this.mensaje = "El resultado hallado no pertenece a este fondeador, producto o " + (vm.condisponible ? "no tiene monto disponible" : "tiene disponible");
-                                        $("#modalMensaje").modal("show");
+                                        excluidos.push(query)
                                     } else {
                                         this.encontrados.push(res)
                                     }
@@ -478,6 +512,53 @@
                                     $("#modalMensaje").modal("show");
                                 }
                             });
+
+                            if (this.encontrados.length != 0) {
+
+                                this.loaderCuotas = true;
+
+                                var formData = new FormData();
+                                formData.append('buscar', this.encontrados.map(x=>x.codigoFondeador).join(","));
+                                formData.append('cuotasHasta', '01-01-1999');
+                                formData.append('estados', '0');
+
+                                let cuotasRes = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                                    method: 'POST',
+                                    body: formData
+                                }).then(x => x.json());
+
+
+                                if (!vm.cuotas.map(x => x.codigoFondeador).includes(cuotasRes.codigoFondeador)) {
+                                    cuotasRes.forEach(x => {
+                                        x.saldo = x.nCuotaMensual - x.pagado;
+                                        x.aPagar = 0;
+                                    });
+
+                                    cuotasRes.forEach(x => vm.cuotas.push(x));
+
+                                    this.creditos.forEach(c => {
+                                        let d = c.disponible;
+                                        vm.cuotas.filter(a => a.codigoFondeador == c.codigoFondeador).forEach(cu => {
+                                            if (d >= cu.saldo) {
+                                                cu.aPagar = parseFloat(cu.saldo.toFixed(2));
+                                                d = d - cu.saldo;
+                                            }
+                                            else {
+                                                cu.aPagar = parseFloat(d.toFixed(2));
+                                                d = 0;
+                                            }
+                                        });
+                                    });
+                                }
+
+                                this.loaderCuotas = false;
+
+                            }
+                            if (excluidos.length != 0) {
+                                this.mensaje = "No se hallaron los siguientes créditos: ";
+                                this.lista = excluidos;
+                                $("#modalMensaje").modal("show");
+                            }
                         },
                         formatMoney: function (num) {
                             return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -642,6 +723,15 @@
                                 });
                             else
                                 vm.checkedCreditos = [];
+                        },
+                        ChangeCheckedEncontrados: function () {                            
+                            if (this.CheckedAllEncontrados)
+                                this.encontrados.map(x => x.codigoFondeador).forEach(e => {
+                                    if (vm.checkedCreditos.filter(x => x.codigoFondeador == e).length == 0)
+                                        vm.checkedCreditos.push(e);
+                                });
+                            else
+                                vm.checkedCreditos = [];                                
                         },
                         BuscarCuotasPorVencer: async function () {
                             let codigoFondeador = vm.credito.codigoFondeador;

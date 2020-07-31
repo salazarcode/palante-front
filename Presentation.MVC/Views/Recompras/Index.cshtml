@@ -10,7 +10,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-10">
+            <div class="col-md-12">
                 <table class="table table-hover table-bordered table-sm" style="margin-top:20px">
                     <thead>
                         <tr>
@@ -34,7 +34,7 @@
                             <td>{{GetDate(r.creado)}}</td>
                             <td>{{GetDate(r.modificado)}}</td>
                             <td>{{GetDate(r.fechaCierre) == '01-01-0001' ? 'No cerrada' : GetDate(r.fechaCierre)}}</td>
-                            <td>{{formatMoney(r.creditos.map(x=>x.precioRecompra).reduce((x,y)=>x+y))}}</td>
+                            <td>{{formatMoney(r.creditos.map(x=>x.precioRecompra).reduce((x,y)=>x+y).toFixed(2))}}</td>
                             <td>
                                 <a href="#" @@click="verDetalle(index)">Ver</a>
                             </td>

@@ -761,7 +761,6 @@
                                 sum = parseFloat(sum) + parseFloat(array[i][campo]);
                             return this.formatMoney(sum);
                         },
-
                         sumatoria: function () {
                             this.total = vm.seleccionados.map(x => x.precio).reduce((x, y) => parseFloat(x) + parseFloat(y));
                         }
