@@ -154,6 +154,11 @@
                             </tr>
 
                             <tr>
+                                <th scope="row">Capital total sin pagar</th>
+                                <td>{{formatMoney(credito.capitalSinPagar) || 0}}</td>
+                            </tr>
+
+                            <tr>
                                 <th scope="row">Último Pago</th>
                                 <td>{{fecha(credito.fechaUltimoPago) || 0}}</td>
                             </tr>
@@ -187,13 +192,13 @@
                                 <th scope="row">Precio de Recompra</th>
                                 <td>
                                     <b>{{formatMoney(credito.precioRecompra.toFixed(2))}}</b>
-                                        <input type="checkbox"
-                                               data-toggle="tooltip" data-placement="top" title="Activar Cálculo Diario"
-                                               :disabled="credito.Interes == 0"
-                                               id="checkCalculoDiario"
-                                               v-model="credito.CalcularDiariamente"
-                                               @@change="CalcularDiario(credito)"
-                                               style="width: 15px;height:15px;float:right">
+                                    <input type="checkbox"
+                                           data-toggle="tooltip" data-placement="top" title="Activar Cálculo Diario"
+                                           :disabled="credito.Interes == 0"
+                                           id="checkCalculoDiario"
+                                           v-model="credito.CalcularDiariamente"
+                                           @@change="CalcularDiario(credito)"
+                                           style="width: 15px;height:15px;float:right">
                                 </td>
                             </tr>
                         </table>
@@ -254,18 +259,7 @@
                         CalcularSeleccionados: function () {
                             vm.creditos.filter(x => vm.checkedCreditos.includes(x.codigoFondeador)).forEach(credito => {
                                 let obj = this.creditos.find(x => x.codigoFondeador == credito.codigoFondeador);
-
-                                if ((new Date(vm.credito.fechaUltimoPago)).getFullYear() != 1) {
-                                    obj.DiferenciaDias = this.DiferenciaDias(obj.fechaUltimoPago, this.fechaCalculo);
-                                    obj.Factor = Math.pow(1 + parseFloat(obj.nTasaComp) / 100, parseFloat(obj.DiferenciaDias) / parseFloat(360)) - 1;
-                                    obj.Interes = (Math.pow(1 + parseFloat(obj.nTasaComp) / 100, parseFloat(obj.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(obj.capitalPorVencerSinPagar);
-                                }
-
-                                obj.precioRecompra = 0;
-                                obj.precioRecompra += parseFloat(obj.cuotasVencidasVigenteSinPagar);
-                                obj.precioRecompra += parseFloat(obj.capitalPorVencerSinPagar);
-                                obj.precioRecompra += obj.CalcularDiariamente ? parseFloat(obj.Interes) : 0;
-
+                                vm.Calcular(obj);
                             });
 
                             if (this.credito != "") {
@@ -276,7 +270,7 @@
                             if ((new Date(credito.fechaUltimoPago)).getFullYear() != 1) {
                                 credito.DiferenciaDias = this.DiferenciaDias(credito.fechaUltimoPago, this.fechaCalculo);
                                 credito.Factor = Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1;
-                                credito.Interes = (Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(credito.capitalPorVencerSinPagar);
+                                credito.Interes = (Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(credito.capitalPorVencerSinPagar != 0 ? credito.capitalPorVencerSinPagar : credito.capitalSinPagar);
                             }
 
                             credito.precioRecompra = 0;
@@ -337,6 +331,7 @@
                             this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f);
                         },
                         verCalculos: function (evento, credito) {
+                            this.ConPeriodoGracia = true;
                             this.Calcular(credito);
                             this.credito = credito;
 

@@ -479,7 +479,7 @@
                                 x.saldo = x.nCuotaMensual - x.pagado;
                             });
 
-                            vm.cuotas = cuotasRes;
+                            vm.cuotas = cuotasRes.filter(x=>x.nSubProd == this.p && x.fondeador == this.f);
 
                             this.aPagarTotal = $("#monto").val();
                             this.changeAPagarTotal();
