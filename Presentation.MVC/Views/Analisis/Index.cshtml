@@ -234,46 +234,11 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingFour">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                                    Deuda con Palante
-                                                </button>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>PagoID</th>
-                                                        <th>Crédito</th>
-                                                        <th>Calendario</th>
-                                                        <th>Cuota</th>
-                                                        <th>Monto</th>
-                                                    </tr>
-                                                    <tr v-for="elem in deudaDetalle">
-                                                        <td>{{elem.pagoID}}</td>
-                                                        <td>{{elem.nCodCred}}</td>
-                                                        <td>{{elem.nNroCalendario}}</td>
-                                                        <td>{{elem.nNroCuota}}</td>
-                                                        <td>{{formatMoney(elem.monto)}}</td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <div class="row float-left">
-                            <div class="col">
-                                <label for="total">Deuda Total</label>
-                                <input type="text" id="deuda" class="form-control" :value="Sum(deudaDetalle, 'monto')" disabled />
-                            </div>
-                        </div>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
@@ -670,7 +635,6 @@
                         },
                         verDetalle: async function (credito) {
                             try {
-                                console.log(credito)
                                 this.detalle = credito;
                                 this.deudaDetalle = await fetch(this.api + "Pagos/FindDeuda?nCodCred=" + this.detalle.nCodCred).then(x => x.json());
 
@@ -678,7 +642,7 @@
                                 this.cronogramaPalante = res1.length != 0 ? res1[res1.length - 1] : [];
 
                                 let res2 = await fetch(this.api + "Cronogramas/CronogramasFondeador?codigo=" + this.detalle.nCodCred).then(x => x.json());
-                                this.cronogramaFondeador = res2.length != 0 ? res2[res1.length - 1] : [];
+                                this.cronogramaFondeador = res2[0];
 
                                 $("#modalDetalle").modal("show");
                             } catch (e) {
