@@ -381,32 +381,33 @@
                             return moment(fecha).format("DD/MM/YYYY");
                         },
                         guardar: async function () {
-                            var aux = vm.cuotas
-                                .filter(x => x.aPagar != 0);
-                            var pagos = aux.map(x => {
-                                var joined = [];
-                                joined.push(x.codigoFondeador);
-                                joined.push(x.nNroCuota);
-                                joined.push(parseFloat(x.aPagar));
-                                joined.push(false)
+                            let detalles = vm.cuotas
+                                .filter(e => e.aPagar != 0)
+                                .map(x => {
+                                    return {
+                                        codigoFondeador: x.codigoFondeador,
+                                        nNroCuota: x.nNroCuota,
+                                        monto: x.aPagar
+                                    }
+                                });
 
-                                return joined.join(",")
-                            });
-                            var detalles = pagos;
+                            this.loaderGuardar = true;
 
-                            var formData = new FormData();
-                            formData.append('pagoID', this.PagoID);
-                            formData.append('FondeadorID', vm.f);
-                            formData.append('ProductoID', vm.p);
-                            formData.append('Creador', JSON.parse(localStorage.getItem("usuario")).nombre);
-                            formData.append('Pagos', detalles.join(";"));
-                            formData.append('EsMochila', true);
+                            await fetch(this.api + "Pagos/Save",
+                                {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        pagoID: 0,
+                                        fondeadorID: parseInt(vm.f),
+                                        productoID: parseInt(vm.p),
+                                        esMochila: true,
+                                        creador: JSON.parse(localStorage.getItem("usuario")).nombre,
+                                        pagos: detalles
+                                    })
+                                });
 
-                            let res = await fetch(this.api + "Pagos/Save", {
-                                method: 'POST',
-                                body: formData
-                            }).then(response => response.json());
-
+                            this.loaderGuardar = false;
                             window.location.href = '@(ViewBag.domain+"Pagos")';
                         },
                         random: function (min, max) {

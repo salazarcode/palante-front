@@ -99,7 +99,7 @@
                     <div class="row">
                         <div class="col">
                             <label for="creado">Creado:</label>
-                            <input type="date" class="form-control" name="date" v-model="creado" value="" />
+                            <input type="date" class="form-control" name="date" v-model="creado" value="" @@change="changeCreado"/>
                         </div>
                     </div>
                     <br />
@@ -129,7 +129,7 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <label for="creado">Fecha corte:</label>
-                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
+                                    <input type="date" class="form-control" name="date" v-model="creado" value="" @@change="changeCreado" />
                                     <br />
 
                                     <label for="creado">IDs, DNIs o RUCs:</label>
@@ -321,6 +321,13 @@
                 }
             },
             methods: {
+                changeCreado: function () {
+                    
+                    if (moment().diff(moment(vm.creado), 'days') <= 0) {
+                        vm.creado = new Date().toISOString().slice(0, 10);
+                    }
+                    
+                },
                 agregarItem: function () {
                     let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
                     if (finding == undefined)

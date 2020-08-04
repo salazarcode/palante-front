@@ -604,37 +604,32 @@
                             $(event.target).removeClass("btn-primary");
                             $(event.target).addClass("btn-warning");
 
-                            let creditos = vm.creditosFiltrados
-                                .filter(e => vm.checkedCreditos.includes(e.codigoFondeador))
-                                .map(s => s.codigoFondeador);
 
-                            let cuotas = vm.cuotas.filter(cu => creditos.includes(cu.codigoFondeador) && cu.aPagar != 0 && cu.aPagar != '');
-
-                            var detalles = cuotas.map(x => {
-                                var joined = [];
-                                joined.push(x.codigoFondeador);
-                                joined.push(x.nNroCuota);
-                                joined.push(parseFloat(x.aPagar));
-                                joined.push(false)
-
-                                return joined.join(",")
-                            });
-
-                            let concat = detalles.join(";");
+                            let detalles = vm.cuotas
+                                .filter(e => e.aPagar != 0 && vm.checkedCreditos.includes(e.codigoFondeador))
+                                .map(x => {
+                                    return {
+                                        codigoFondeador: x.codigoFondeador,
+                                        nNroCuota: x.nNroCuota,
+                                        monto: x.aPagar
+                                    }
+                                }); 
 
                             this.loaderGuardar = true;
-                            var formData = new FormData();
-                            formData.append('pagoID', 0);
-                            formData.append('FondeadorID', vm.f);
-                            formData.append('ProductoID', vm.p);
-                            formData.append('Creador', JSON.parse(localStorage.getItem("usuario")).nombre);
-                            formData.append('Pagos', concat);
-                            formData.append('EsMochila', false);
 
-                            let res = await fetch(this.api + "Pagos/Save", {
-                                method: 'POST',
-                                body: formData
-                            }).then(response => response.json());
+                            await fetch(this.api + "Pagos/Save",
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    pagoID: 0,
+                                    fondeadorID: parseInt(vm.f),
+                                    productoID: parseInt(vm.p),
+                                    esMochila: false,
+                                    creador: JSON.parse(localStorage.getItem("usuario")).nombre,
+                                    pagos: detalles
+                                })
+                            });
 
                             this.loaderGuardar = false;
 

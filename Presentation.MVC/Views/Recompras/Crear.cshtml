@@ -36,7 +36,9 @@
                     <input type="date" class="form-control" id="fechaCalculo" v-model="fechaCalculo" @@change="CalcularSeleccionados" />
                 </div>
                 <div class="col-md-2">
-                    <button style="margin-top:8px;margin-top: 32px;width:100%" class="btn btn-success" @@click="Guardar">Guardar</button>
+                    <label>Total recompra:</label>
+                    <input type="text" class="form-control" disabled name="name" :value="sumatoria" />
+                    <button style="width:100%;margin-top:5px" class="btn btn-success" @@click="Guardar">Guardar</button>
                 </div>
             </div>
             <hr />
@@ -57,7 +59,11 @@
                         <table v-if="encontrados.length != 0" style="font-size:10pt;" class="table table-sm table-hover table-bordered table-success">
                             <thead>
                                 <tr>
-                                    <th scope="col">Check</th>
+                                    <th scope="col">
+                                        <input type="checkbox"
+                                               v-model="checkEncontradosValue"
+                                               @@change="checkEncontrados">
+                                    </th>
                                     <th scope="col">CodigoFondeador</th>
                                     <th scope="col">ID</th>
                                     <th scope="col">Nombre</th>
@@ -138,11 +144,11 @@
                                 <th scope="row">Cuotas Vencidas y vigente No Pagadas</th>
                                 <td>
 
-                                    <b>{{formatMoney(ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia) || 0}}</b>
+                                    <b>{{formatMoney(credito.ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia) || 0}}</b>
                                     <input type="checkbox"
                                            data-toggle="tooltip" data-placement="top" title="Con Periodo de Gracia"
                                            id="checkConPeriodoGracia"
-                                           v-model="ConPeriodoGracia"
+                                           v-model="credito.ConPeriodoGracia"
                                            @@change="CalcularDiario(credito)"
                                            style="width: 15px;height:15px;float:right">
                                 </td>
@@ -247,14 +253,36 @@
                         encontrados: [],
                         fechaCalculo: moment().format("YYYY-MM-DD"),
                         mensaje: "",
-                        ConPeriodoGracia:true
+                        checkEncontradosValue: false
                     },
                     methods: {
+                        checkEncontrados: function () {
+                            if (this.checkEncontradosValue) {
+                                this.encontrados.map(x => x.codigoFondeador)
+                                    .forEach(a => {
+                                    if (!this.checkedCreditos.includes(a)) {
+                                        this.checkedCreditos.push(a);
+                                    }
+                                });
+                            } else {
+                                this.encontrados.map(x => x.codigoFondeador)
+                                    .forEach(a => {
+                                        let index = this.checkedCreditos.findIndex(e => e.codigo == a);
+                                        this.checkedCreditos.splice(index, 1);
+                                });
+                            }
+                        },
                         CalcularDiario: function (credito) {
                             credito.precioRecompra = 0;
-                            credito.precioRecompra += parseFloat(this.ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia);
-                            credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
-                            credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
+
+                            if (credito.capitalPorVencerSinPagar > 0) {
+                                credito.precioRecompra += parseFloat(credito.ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia);
+                                credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
+                                credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
+                            } else {
+                                credito.precioRecompra += parseFloat(credito.capitalSinPagar);
+                                credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
+                            }
                         },
                         CalcularSeleccionados: function () {
                             vm.creditos.filter(x => vm.checkedCreditos.includes(x.codigoFondeador)).forEach(credito => {
@@ -331,7 +359,6 @@
                             this.creditosFiltrados = this.creditos.filter(x => x.nSubProd == vm.p && x.fondeador == vm.f);
                         },
                         verCalculos: function (evento, credito) {
-                            this.ConPeriodoGracia = true;
                             this.Calcular(credito);
                             this.credito = credito;
 
@@ -382,10 +409,14 @@
                     },
                     computed: {
                         sumatoria: function () {
-                            let sum = 0;
-                            for (var i = 0; i < this.seleccionados.length; i++)
-                                sum = parseFloat(sum) + parseFloat(this.seleccionados[i].precio);
-                            return this.formatMoney(sum);
+                            let creditos = this.creditos
+                                .filter(c => this.checkedCreditos.includes(c.codigoFondeador))
+                            
+                            let res = creditos.length != 0 ? creditos.map(cr => cr.precioRecompra)
+                                .reduce((a, b) => parseFloat(a) + parseFloat(b))
+                                .toFixed(2) : "0.00"
+                            
+                            return this.formatMoney(res);
                         },
                         busquedaItems: function () {
                             return this.busqueda.split("\n").map(x => x.trim());
@@ -393,13 +424,9 @@
                     },
                     async mounted() {
                         this.api = $("#endpoint").val(); 
-                        //$("#fechaCalculo").val(moment().format("YYYY-MM-DD"))
 
                         this.productos = await fetch(this.api + "Producto/All").then(x => x.json());
                         this.fondeadores = await fetch(this.api + "Fondeador/All").then(x => x.json());
-
-                        let desde = $("#desde").val();
-                        let hasta = $("#hasta").val();
 
                         var formData = new FormData();
                         formData.append('desde', (new Date()).toISOString());
@@ -418,6 +445,7 @@
                             credito.Interes = 0;
                             credito.PrecioRecompra = 0;
                             credito.CalcularDiariamente = credito.esReprogramado;
+                            credito.ConPeriodoGracia = true;
                         });
 
 

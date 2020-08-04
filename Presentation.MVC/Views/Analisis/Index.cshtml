@@ -24,7 +24,6 @@
                                         <th>Capital</th>
                                         <th>Precio</th>
                                         <th>Cuotas</th>
-                                        <th>Vcto.</th>
                                         <th>Producto</th>
                                         <th>ID</th>
                                         <th>Nombre</th>
@@ -40,7 +39,6 @@
                                         <td>{{formatMoney(credito.nPrestamo)}}</td>
                                         <td>{{formatMoney(credito.precio)}}</td>
                                         <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{fecha(credito.dFecVcto)}}</td>
                                         <td>{{credito.producto.cNomCod}}</td>
                                         <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
                                         <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
@@ -129,7 +127,6 @@
                                                             <th>Precio</th>
                                                             <th>Tasa</th>
                                                             <th>Cuotas</th>
-                                                            <th>Vcto.</th>
                                                             <th>Producto</th>
                                                             <th>ID</th>
                                                             <th>Nombre</th>
@@ -143,7 +140,6 @@
                                                             <td>{{formatMoney(detalle.precio)}}</td>
                                                             <td>{{detalle.nTasaComp}}</td>
                                                             <td>{{detalle.nNroCuotas}}</td>
-                                                            <td>{{fecha(detalle.dFecVcto)}}</td>
                                                             <td>{{detalle.producto.cNomCod}}</td>
                                                             <td>{{detalle.dni != null ? 'DNI' : 'RUC'}} {{detalle.dni != null ? detalle.dni : detalle.ruc}}</td>
                                                             <td>{{detalle.dni != null ? detalle.nombres : detalle.razonSocial}}</td>
@@ -214,6 +210,7 @@
                                                         <th>Total</th>
                                                         <th>Estado</th>
                                                         <th>Pagada</th>
+                                                        <th>Fecha Pago</th>
                                                     </tr>
                                                     <tr v-for="cuota in cronogramaFondeador.cuotas"
                                                         :class="{ 'table-success' : cuota.nEstado ==  2  }">
@@ -229,6 +226,7 @@
                                                         <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
                                                             {{NEstado(cuota.nEstado)}}
                                                         </td>
+                                                        <td>{{fecha(cuota.dFecPagoCap)}}</td>
                                                     </tr>
                                                 </table>
                                             </div>
@@ -706,9 +704,9 @@
                         NEstado: function (estadoCuota) {
                             switch (estadoCuota) {
                                 case 0:
-                                    return "Sin Pagar";
+                                    return "Vigente";
                                 case 2:
-                                    return "Pagada";
+                                    return "Cancelado";
                             }
                         },
                         Moneda: function (moneda) {
