@@ -3,754 +3,217 @@
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
 
-    <div id="app">
-        <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
 
-        <div class="container">
-            <div class="row">
-                <div class="col-md-10">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div v-if="seleccionados.length == 0"
-                                 style="border:dashed 3px gray; height:300px; width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
-                                Busca y selecciona algunos créditos
-                            </div>
-                            <table v-if="seleccionados.length != 0" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                <thead>
-                                    <tr>
-                                        <th>Nro.</th>
-                                        <th>Estado.</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Producto</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th colspan="2">Opciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="main">
-                                    <tr v-for="credito in seleccionados"
-                                        :id="credito.nCodCred">
-                                        <td>{{credito.nCodCred}}</td>
-                                        <td>{{Estado(credito.nEstado)}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{formatMoney(credito.precio)}}</td>
-                                        <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{credito.producto.cNomCod}}</td>
-                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
-                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
-                                        <td>
-                                            <a 
-                                               href="#"
-                                               @@click="verDetalle(credito)"                                               
-                                               >Detalle</a>
-                                        </td>
-                                        <td>
-                                            <a href="#" @@click="Seleccionar(credito,0)">Quitar</a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+<div id="app">
+    <input type="hidden" id="endpoint" name="endpoint" value="@ViewBag.endpoint" />
+    <input type="hidden" id="domain" name="domain" value="@ViewBag.domain" />
+    <input type="hidden" id="PagoID" name="PagoID" value="@ViewBag.PagoID" />
 
-                    </div>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-2">
+                <label for="busqueda">Buscar: </label>
+                <input type="text" class="form-control" id="busqueda" v-model="busqueda" />
+                <button class="btn btn-primary" style="margin-top:5px" @@click="buscar" @@keyup.enter="buscar">Buscar</button>
+                <img v-if="buscandoCredito" src="~/img/loader.gif" height="25" width="25" alt="Loader image" />
+            </div>
+
+            <div class="col-md-10">
+                <label>Créditos:</label>
+
+                <div v-if="creditos.length == 0"
+                     style="border:dashed 3px gray; height:150px;width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
+                    <p>
+                        <b>Busca algún crédito y se listará aquí.</b>
+                    </p>
                 </div>
-                <div class="col-md-2">
 
-                    <div class="col">
-                        <label for="total">Total</label>
-                        <input type="text" id="capital" class="form-control" :value="formatMoney(total)" disabled />
-                    </div>
-
-                    <div class="row">
-                        <div class="col">
-                            <button class="btn btn-sm btn-primary btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#exampleModal"
-                                    style="width:100%;margin-top:10px">
-                                Buscar
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col">
-                            <button v-if="seleccionados.length != 0"
-                                    class="btn btn-sm btn-success btn-sm"
-                                    style="margin-bottom:10px;width:100%;margin-top:10px"
-                                    @@click="ReporteDeuda">
-                                Excel
-                            </button>
-                        </div>
-                    </div>
-
-
-
-
+                <div v-if="creditos.length != 0" style="max-height:150px;height:150px;overflow-y:auto;font-size:10pt">
+                    <table class="table table-striped table-bordered table-sm table-hover" style="width:100%;font-size:10pt">
+                        <thead>
+                            <tr>
+                                <th scope="col">CodigoFondeador</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Nombres</th>
+                                <th scope="col">Monto</th>
+                                <th scope="col">Fecha Venta</th>
+                                <th scope="col">Fecha Ultimo Pago</th>
+                                <th scope="col">Fecha Recompra</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="c in creditos" @@click="verCuotas($event, c)" style="cursor:pointer;">
+                                <th scope="row">{{c.codigoFondeador}}</th>
+                                <td>{{c.id}}</td>
+                                <td>{{c.nombres}}</td>
+                                <td>{{formatMoney(c.nPrestamo)}}</td>
+                                <td>{{c.fechaVenta != undefined ? GetDate(c.fechaVenta) : ''}}</td>
+                                <td>{{c.fechaUltimoPago != undefined ? GetDate(c.fechaUltimoPago) : ''}}</td>
+                                <td>{{c.fechaRecompra != "1900-01-01T00:00:00" ? GetDate(c.fechaRecompra) : ''}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+
+                <label>Cuotas:</label>
+
+                <div v-if="creditoSelected == ''"
+                     style="border:dashed 3px gray; height:250px;width:100%; display:flex; flex-direction:row; justify-content:center; align-items:center">
+                    <p>
+                        <b>Selecciona un crédito y las cuotas se listarán aquí.</b>
+                    </p>
+                </div>
+
+                <div v-if="creditoSelected != ''" style="max-height:250px;height:250px;overflow-y:auto;font-size:10pt">
+                    <table style="font-size:10pt" id="tablaCuotas" class="table table-sm table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Fec.Vcto.</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Edo. Pago</th>
+                                <th scope="col">Amortizacion</th>
+                                <th scope="col">Interés</th>
+                                <th scope="col">Per. Gracia</th>
+                                <th scope="col">Monto</th>
+                                <th scope="col">Pagado</th>
+                                <th scope="col">Saldo</th>
+                                <th scope="col">Cancelado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="cuota in cuotas"
+                                :class="{'table-danger': cuota.nEstadoCuota == 2, 'table-primary': cuota.nEstadoCuota == 1 }">
+                                <th scope="row">{{cuota.nNroCuota}}</th>
+                                <th>{{GetDate(cuota.dFecVcto)}}</th>
+                                <td>{{NEstadoCuota(cuota.nEstadoCuota)}}</td>
+                                <td>{{NEstado(cuota.nEstado)}}</td>
+                                <td>{{formatMoney(cuota.nCapital)}}</td>
+                                <td>{{formatMoney(cuota.nInteres)}}</td>
+                                <td>{{formatMoney(cuota.nPerGracia)}}</td>
+                                <td>{{formatMoney(cuota.nCuotaMensual)}}</td>
+                                <td>{{formatMoney(cuota.pagado)}}</td>
+                                <td>{{formatMoney(cuota.saldo)}}</td>
+                                <td>{{cuota.fechaPago != '0001-01-01T00:00:00' ? GetDate(cuota.fechaPago) : ''}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+
             </div>
         </div>
-
-        <div class="modal fade" id="modalDetalle" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel"><b>Detalle Crédito {{detalle.nCodCred}} {{detalle.ccodcta == undefined ? '' : '-' + detalle.ccodcta.trim() }}</b></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body" style="max-height:400px;overflow-y:auto">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div id="accordion">
-                                    <div class="card">
-                                        <div class="card-header" id="headingOne">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
-                                                    Datos de crédito
-                                                </button>
-                                            </h5>
-                                        </div>
-
-                                        <div id="collapseZero" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table v-if="detalle != ''" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Nro.</th>
-                                                            <th>Moneda</th>
-                                                            <th>Capital</th>
-                                                            <th>Precio</th>
-                                                            <th>Tasa</th>
-                                                            <th>Cuotas</th>
-                                                            <th>Producto</th>
-                                                            <th>ID</th>
-                                                            <th>Nombre</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="main">
-                                                        <tr :id="detalle.nCodCred">
-                                                            <td>{{detalle.nCodCred}}</td>
-                                                            <td>{{Moneda(detalle.nMoneda)}}</td>
-                                                            <td>{{formatMoney(detalle.nPrestamo)}}</td>
-                                                            <td>{{formatMoney(detalle.precio)}}</td>
-                                                            <td>{{detalle.nTasaComp}}</td>
-                                                            <td>{{detalle.nNroCuotas}}</td>
-                                                            <td>{{detalle.producto.cNomCod}}</td>
-                                                            <td>{{detalle.dni != null ? 'DNI' : 'RUC'}} {{detalle.dni != null ? detalle.dni : detalle.ruc}}</td>
-                                                            <td>{{detalle.dni != null ? detalle.nombres : detalle.razonSocial}}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingOne">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                                    Último cronograma COF
-                                                </button>
-                                            </h5>
-                                        </div>
-
-                                        <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Fec. Vcto.</th>
-                                                        <th>Capital</th>
-                                                        <th>Interes</th>
-                                                        <th>P. Gracia</th>
-                                                        <th>Total</th>
-                                                        <th>Estado</th>
-                                                        <th>Pagada</th>
-                                                    </tr>
-                                                    <tr v-for="cuota in cronogramaPalante.cuotas"
-                                                        :class="{ 'table-success' : cuota.nEstado ==  2  }">
-                                                        <td>{{cuota.numeroCuota}}</td>
-                                                        <td>{{cuota.fechaPago}}</td>
-                                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                                        </td>
-                                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
-                                                            {{NEstado(cuota.nEstado)}}
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header" id="headingThree">
-                                            <h5 class="mb-0">
-                                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                                    Cronograma Fondeador
-                                                </button>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-                                            <div class="card-body" style="font-size:10pt">
-                                                <table class="table table-bordered table-sm table-hover">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Fec. Vcto.</th>
-                                                        <th>Capital</th>
-                                                        <th>Interes</th>
-                                                        <th>P. Gracia</th>
-                                                        <th>Total</th>
-                                                        <th>Estado</th>
-                                                        <th>Pagada</th>
-                                                        <th>Fecha Pago</th>
-                                                    </tr>
-                                                    <tr v-for="cuota in cronogramaFondeador.cuotas"
-                                                        :class="{ 'table-success' : cuota.nEstado ==  2  }">
-                                                        <td>{{cuota.numeroCuota}}</td>
-                                                        <td>{{cuota.fechaPago}}</td>
-                                                        <td>{{formatMoney(cuota.amortizacion)}}</td>
-                                                        <td>{{formatMoney(cuota.interes)}}</td>
-                                                        <td>{{formatMoney(cuota.periodoGracia)}}</td>
-                                                        <td>{{formatMoney(cuota.totalCuota)}}</td>
-                                                        <td :class="{ 'table-primary' : cuota.nEstadoCuota ==  1 , 'table-secondary' : cuota.nEstadoCuota ==  3  }">
-                                                            {{NEstadoCuota(cuota.nEstadoCuota)}}
-                                                        </td>
-                                                        <td :class="{ 'table-danger' : cuota.nEstado ==  0 }">
-                                                            {{NEstado(cuota.nEstado)}}
-                                                        </td>
-                                                        <td>{{fecha(cuota.dFecPagoCap)}}</td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
+</div>
 
 
-        <div class="modal fade" id="confirmarGuardar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Confirmas que deseas guardar la recompra de total <b>{{total}}</b>, integrada por los créditos: </p>
-                        <ul>
-                            <li v-for="c in creditosFiltrados.filter(x=>x.selected)"><b>ID:</b> {{c.nCodCred}} - <b>Monto:</b> {{c.nPrestamo.toFixed(2)}}</li>
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary" @@click="guardar" data-dismiss="modal">Confirmar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+@section Scripts{
 
-        <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Mensaje</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>No se encontraron registros en esa selección</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <script>
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                busqueda: "",
+                buscandoCredito: false,
+                creditos: [],
+                cuotas: [],
+                creditoSelected: ""
+            },
+            methods: {
+                buscar: async function () {
+                    this.buscandoCredito = true;
+                    var formData = new FormData();
+                    formData.append('desde', '01-01-2020');
+                    formData.append('hasta', (new Date()).toISOString());
+                    formData.append('busqueda', this.busqueda);
 
+                    let creditos = await fetch(this.api + "Creditos/CreditosFondeador", {
+                        method: 'POST',
+                        body: formData
+                    }).then(x => x.json());
+                    this.buscandoCredito = false;
 
+                    creditos.forEach(x => {
+                        if (this.creditos.find(z =>z.codigoFondeador == x.codigoFondeador) == undefined)
+                            this.creditos.push(x);
+                    });
+                },                
+                GetDate: function (strDate) {
+                    return moment(strDate).format("DD-MM-YYYY");
+                },
+                verCuotas: async function (event, credito) {
+                    this.cuotas = [];
+                    
+                    $(event.target).parent("tr").siblings().removeClass("table-primary");
+                    $(event.target).parent("tr").addClass("table-primary");
 
+                    this.creditoSelected = credito;
 
-        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Búsqueda</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="parametros" v-if="pantallaBusqueda == 0">
-                            <div class="row">
-                                <div clss="col-md-12">
-                                    <label for="creado">Fecha corte:</label>
-                                    <input type="date" class="form-control" name="date" v-model="creado" value="" />
-                                    <br />
+                    var formData = new FormData();
+                    formData.append('buscar', credito.codigoFondeador);
+                    formData.append('cuotasHasta', '01-01-1999');
+                    formData.append('estados', '0');
 
-                                    <label for="creado">IDs, DNIs o RUCs:</label>
-                                    <input type="text"
-                                           name="busqueda"
-                                           id="busqueda"
-                                           v-model="busqueda"
-                                           style="width:100%"
-                                           placeholder="Escribe un item y presiona enter"
-                                           @@keyup.enter="agregarItem"
-                                           class="form-control" />
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <br />
-                                    <p>Elementos: <span class="badge badge-light">{{busquedaItems.length != 0 ? busquedaItems.length : 'Agrega items a la búsqueda'}}</span></p>
+                    let cuotas = await fetch(this.api + "Cuotas/GetCuotasFondeador", {
+                        method: 'POST',
+                        body: formData
+                    }).then(x => x.json());
 
-                                    <div class="list-group">
-                                        <a href="#"
-                                           v-for="(item,index) in busquedaItems"
-                                           @@click="eliminarItem(index)"
-                                           class="list-group-item list-group-item-action">
-                                            {{item}}
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="Cargando" v-if="pantallaBusqueda == 1">
-                            <img src="~/img/loader.gif" height="40" width="40" alt="Loader image" />
-                        </div>
-                        <div id="resultado" v-if="pantallaBusqueda == 2">
-                            <br />
-                            <div v-if="busquedaSinResultado && !busquedaLoader" class="alert alert-warning" role="alert">
-                                No se encontraron resultados
-                            </div>
-                            <table style="margin-top:20px" v-if="!busquedaSinResultado && !busquedaLoader" class="table table-sm table-bordered table-hover" id="tableBusqueda">
-                                <thead>
-                                    <tr>
-                                        <th>Nro.</th>
-                                        <th>Nro.</th>
-                                        <th>Moneda</th>
-                                        <th>Capital</th>
-                                        <th>Precio</th>
-                                        <th>Cuotas</th>
-                                        <th>Vcto.</th>
-                                        <th>Producto</th>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="main">
-                                    <tr v-for="credito in resBusqueda"
-                                        :class="{ 'table-primary': credito.selected }"
-                                        :id="credito.nCodCred"
-                                        @@click="Seleccionar(credito,1)">
-                                        <td>
-                                            <input type="checkbox"
-                                                   class="form-control"
-                                                   :checked="seleccionados.map(x=>x.nCodCred).includes(credito.nCodCred)">
-                                        </td>
-                                        <td>{{credito.nCodCred}}</td>
-                                        <td>{{Moneda(credito.nMoneda)}}</td>
-                                        <td>{{formatMoney(credito.nPrestamo)}}</td>
-                                        <td>{{credito.precio}}</td>
-                                        <td>{{credito.nNroCuotas}}</td>
-                                        <td>{{fecha(credito.dFecVcto)}}</td>
-                                        <td>{{credito.producto.cNomCod}}</td>
-                                        <td>{{credito.dni != null ? 'DNI' : 'RUC'}} {{credito.dni != null ? credito.dni : credito.ruc}}</td>
-                                        <td>{{credito.dni != null ? credito.nombres : credito.razonSocial}}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    cuotas.forEach(x => {
+                        x.saldo = x.nCuotaMensual - x.pagado;
+                    });
 
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @@click="pantallaBusqueda = 0" v-if="pantallaBusqueda==2">Atras</button>
-                        <button v-if="pantallaBusqueda==2" type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
-                        <button class="btn btn-sm btn-success" @@click="buscar" v-if="pantallaBusqueda==0">Buscar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        @section Scripts{
-
-            <script>
-                var vm = new Vue({
-                    el: '#app',
-                    data: {
-                        pantallaBusqueda: 0,
-                        buscandoCronogramaCOF: false,
-                        busqueda: "",
-                        tipoBusqueda: 0,
-                        busquedaItems: [],
-                        busquedaSinResultado: false,
-                        busquedaLoader: false,
-                        resBusqueda: [],
-                        creado: new Date().toISOString().substring(0, 10),
-                        creditos: [],
-                        creditosFiltrados: [],
-                        api: "",
-                        seleccionados: [],
-                        screen: 'lista',
-                        total: 0,
-                        page: 1,
-                        deudaDetalle: "",
-                        pagesize: 10,
-                        producto: 0,
-                        recompra: {
-                            recompraID: "",
-                            fechaCreacion: "",
-                            fechaModificacion: "",
-                            fechaConfirmacion: "",
-                            archivo: "",
-                            monto: "",
-                            creditos: [],
-                            confirmed: false
-                        },
-                        detalle: "",
-                        cronogramaCOF: "",
-                        cronogramaPalanteSeleccionado: 1,
-                        cronogramaFondeadorSeleccionado: 1,
-                        estados: [],
-                        nestados: [
-                            { nombre: "Registrados", valor: 1 },
-                            { nombre: "Vigentes", valor: 2 },
-                            { nombre: "Vencidos", valor: 3 },
-                            { nombre: "Pagados", valor: 4 },
-                            { nombre: "Desistidos", valor: 6 },
-                            { nombre: "Prejudiciales", valor: 16 },
-                        ],
-                        desde: "",
-                        hasta: "",
-                        cronogramaPalante: {
-                            cuotas: []
-                        },
-                        cronogramaFondeador: {
-                            cuotas:[]
-                        },
-                        total:"0.00"
-                    },
-                    methods: {
-                        reportePendientesAprobacion: async function () {
-                            var formData = new FormData();
-                            formData.append('FondeadorID', 1);
-                            formData.append('desde', this.desde);
-                            formData.append('hasta', this.hasta);
-
-                            let res = await fetch(this.api + "Creditos/PendientesPorAprobacion", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then((transfer) => {
-                                    if (transfer.status == 500)
-                                        throw true;
-                                    return transfer.blob();
-                                }).then((bytes) => {
-                                    let elm = document.createElement('a');
-                                    elm.href = URL.createObjectURL(bytes);
-                                    elm.setAttribute('download', "PendientesPorAprobacion.xlsx");
-                                    elm.click()
-                                }).catch((error) => {
-                                    $("#modalMensaje").modal("show");
-                                });
-
-                            this.desde = "";
-                            this.hasta = "";
-                        },
-                        reporteCreditosDisponibles: async function () {
-
-                            var formData = new FormData();
-                            formData.append('FondeadorID', 1);
-                            formData.append('desde', this.desde);
-                            formData.append('hasta', this.hasta);
-
-                            let res = await fetch(this.api + "Creditos/DisponiblesPorFondeador", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then((transfer) => {
-                                    if (transfer.status == 500)
-                                        throw true;
-                                    return transfer.blob();
-                                }).then((bytes) => {
-                                    let elm = document.createElement('a');
-                                    elm.href = URL.createObjectURL(bytes);
-                                    elm.setAttribute('download', "DisponiblesParaVenta.xlsx");
-                                    elm.click()
-                                }).catch((error) => {
-                                    $("#modalMensaje").modal("show");
-                                });
-
-                            this.desde = "";
-                            this.hasta = "";
-                        },
-                        CronogramaCOF: async function () {
-                            this.buscandoCronogramaCOF = true;
-
-                            await fetch(this.api + "Cronogramas/CronogramasPalanteExcel?codigo=" + vm.cronogramaCOF)
-                                .then((transfer) => {
-                                    return transfer.blob();
-                                }).then((bytes) => {
-                                    let elm = document.createElement('a');
-                                    elm.href = URL.createObjectURL(bytes);
-                                    elm.setAttribute('download', "Cronograma-" + vm.cronogramaCOF + ".xlsx");
-                                    elm.click()
-                                }).catch((error) => {
-                                    console.log(error);
-                                });
-
-                            this.buscandoCronogramaCOF = false;
-                            console.log(res);
-                        },
-                        BuscarPorEstado: async function () {
-                            var formData = new FormData();
-                            formData.append('Estados', vm.estados.join(","));
-
-                            let res = await fetch(this.api + "Creditos/PorEstado", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then((transfer) => {
-                                    return transfer.blob();
-                                }).then((bytes) => {
-                                    let elm = document.createElement('a');
-                                    elm.href = URL.createObjectURL(bytes);
-                                    elm.setAttribute('download', "CreditosPorEstado.xlsx");
-                                    elm.click()
-                                }).catch((error) => {
-                                    console.log(error);
-                                });
-                        },
-                        ReporteDeuda: async function () {
-                            var creditos = this.seleccionados.map(x => x.nCodCred).join(",");
-                            console.log(creditos);
-
-                            var formData = new FormData();
-                            formData.append('creditos', creditos);
-                            formData.append('Fecha', (new Date()).toISOString());
-
-                            let res = await fetch(this.api + "Reportes/ReporteDeuda", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then((transfer) => {
-                                    return transfer.blob();
-                                }).then((bytes) => {
-                                    let elm = document.createElement('a');
-                                    elm.href = URL.createObjectURL(bytes);
-                                    elm.setAttribute('download', "analisis.xlsx");
-                                    elm.click()
-                                }).catch((error) => {
-                                    console.log(error);
-                                })
-                        },
-                        agregarItem: function () {
-                            let finding = this.busquedaItems.find(x => x == this.busqueda.trim());
-                            if (finding == undefined)
-                                this.busquedaItems.push(this.busqueda.trim());
-                            else {
-                                this.mensaje = "Ya agregaste ese item";
-                                $("#mensajeModal").modal("show");
-                            }
-                            this.busqueda = "";
-                        },
-                        eliminarItem: function (index) {
-                            this.busquedaItems.splice(index, 1);
-                        },
-                        Seleccionar: function (credito, busqueda = 0) {
-                            this.seleccionarNeto(credito, busqueda);
-                        },
-                        seleccionarNeto: function (credito, busqueda) {
-                            if (busqueda == 1)
-                                this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected = !(this.resBusqueda.find(x => x.nCodCred == credito.nCodCred).selected);
-                            else
-                                this.seleccionados.find(x => x.nCodCred == credito.nCodCred).selected = !(this.seleccionados.find(x => x.nCodCred == credito.nCodCred).selected);
-
-                            let index = this.seleccionados.findIndex(x => x.nCodCred == credito.nCodCred)
-
-                            if (index == -1) {
-                                this.seleccionados.push(credito);
-                                $("#" + credito.nCodCred).addClass("table-primary");
-                            } else {
-                                this.seleccionados.splice(index, 1);
-                                $("#" + credito.nCodCred).removeClass("table-primary");
-                            }
-
-                                this.total = vm.seleccionados.filter(x=>x.precio!= undefined).map(x => x.precio).reduce((x, y) => parseFloat(x) + parseFloat(y));
-                        },
-                        buscar: async function () {
-                            this.pantallaBusqueda = 1;
-                            var formData = new FormData();
-                            formData.append('Tipo', this.tipoBusqueda);
-                            formData.append('Query', this.busquedaItems.join(","));
-                            formData.append('Fecha', this.creado);
-
-                            let res = await fetch(this.api + "Creditos/Search", {
-                                method: 'POST',
-                                body: formData
-                            })
-                                .then(response => response.json());
-
-                            if (res.length == 0) {
-                                this.pantallaBusqueda = 2;
-                                this.busquedaSinResultado = true;
-                            } else {
-                                this.busquedaSinResultado = false;
-                                this.busquedaLoader = false;
-                                res.forEach(x => {
-                                    x.selected = false;
-                                });
-
-                                res.forEach(found => {
-                                    if (vm.seleccionados.map(val => val.nCodCred).includes(found.nCodCred)) {
-                                        found.selected = true;
-                                    }
-                                });
-
-                                this.pantallaBusqueda = 2;
-                                this.resBusqueda = res;
-                            }
-                        },
-                        verDetalle: async function (credito) {
-                            try {
-                                this.detalle = credito;
-                                this.deudaDetalle = await fetch(this.api + "Pagos/FindDeuda?nCodCred=" + this.detalle.nCodCred).then(x => x.json());
-
-                                let res1 = await fetch(this.api + "Cronogramas/CronogramasPalante?codigo=" + this.detalle.nCodCred).then(x => x.json())
-                                this.cronogramaPalante = res1.length != 0 ? res1[res1.length - 1] : [];
-
-                                let res2 = await fetch(this.api + "Cronogramas/CronogramasFondeador?codigo=" + this.detalle.nCodCred).then(x => x.json());
-                                this.cronogramaFondeador = res2[0];
-
-                                $("#modalDetalle").modal("show");
-                            } catch (e) {
-                                console.log(e)
-                            }
-                        },
-                        changePage: async function () {
-                            await this.buscarGeneral();
-                        },
-                        buscarGeneral: async function () {
-                            var formData1 = new FormData();
-                            formData1.append('page', this.page);
-                            formData1.append('pagesize', this.pagesize);
-                            formData1.append('producto', this.producto);
-
-                            this.creditos = await fetch(this.api + "Creditos/All", {
-                                method: 'POST',
-                                body: formData1
-                            }).then(response => response.json());
-
-                            this.creditos.forEach(x => {
-                                x.selected = false;
-                            });
-                        },
-                        GetDate: function (strDate) {
-                            return moment(strDate).format("DD-MM-YYYY");
-                        },
-                        guardar: function () {
-                            console.log(this.seleccionados);
-                        },
-                        formatMoney: (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","),
-                        fecha: function (date) {
-                            return moment(date).format("DD/MM/YYYY")
-                        },
-                        Estado: function (estado) {
-                            switch (estado) {
-                                case 1:
-                                    return "Registrado";
-                                case 2:
-                                    return "Vigente";
-                                case 3:
-                                    return "Vencido";
-                                case 4:
-                                    return "Pagado";
-                                case 6:
-                                    return "Desistido";
-                                case 16:
-                                    return "Prejudicial";
-                            }
-                        },
-                        NEstadoCuota: function (estadoCuota) {
-                            switch (estadoCuota) {
-                                case 1:
-                                    return "Vigente";
-                                case 2:
-                                    return "Vencido";
-                                case 3:
-                                    return "Por Vencer";
-                            }
-                        },
-                        NEstado: function (estadoCuota) {
-                            switch (estadoCuota) {
-                                case 0:
-                                    return "Vigente";
-                                case 2:
-                                    return "Cancelado";
-                            }
-                        },
-                        Moneda: function (moneda) {
-                            switch (moneda) {
-                                case 1:
-                                    return "S/";
-                                case 2:
-                                    return "USD";
-                            }
-                        },
-                        Sum: function (array, campo) {
-                            let sum = 0;
-                            for (var i = 0; i < array.length; i++)
-                                sum = parseFloat(sum) + parseFloat(array[i][campo]);
-                            return this.formatMoney(sum);
-                        },
-                        sumatoria: function () {
-                            this.total = vm.seleccionados.map(x => x.precio).reduce((x, y) => parseFloat(x) + parseFloat(y));
-                        }
-                    },
-                    computed: {
-                    },
-                    async mounted() {
-                        this.api = $("#endpoint").val();
-
-                        this.modalBusqueda = $('#exampleModal');
-
-                        this.modalReporteEstado = $('#modalReporteEstado');
-                        
-                        this.modalBusqueda.on('hidden.bs.modal', function (e) {
-                            vm.resBusqueda = [];
-                            vm.pantallaBusqueda = 0;
-                        });
-                        $("#modalDetalle").on('hidden.bs.modal', function (e) {
-                            this.cronogramaPalante = {
-                                cuotas: []
-                            },
-                            this.cronogramaFondeador = {
-                                cuotas: []
-                            }
-                        });
+                    this.cuotas = cuotas;
+                },
+                formatMoney: function (num) {
+                    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                },
+                NEstadoCuota: function (estadoCuota) {
+                    switch (estadoCuota) {
+                        case 1:
+                            return "Vigente";
+                        case 2:
+                            return "Vencido";
+                        case 3:
+                            return "Por Vencer";
                     }
-                });
+                },
+                NEstado: function (estadoCuota) {
+                    switch (estadoCuota) {
+                        case 0:
+                            return "Sin Pagar";
+                        case 2:
+                            return "Pagada";
+                    }
+                },
+            },
+            computed: {
 
-            </script>
+            },
+            async mounted() {
+                this.api = $("#endpoint").val();
+                this.domain = $("#domain").val();
+                this.PagoID = $("#PagoID").val();
+                        
+                this.desde = moment(new Date(2020,0,1)).format("YYYY-MM-DD");
+                this.hasta = moment().format("YYYY-MM-DD");       
 
-        }
+                fetch(this.api + "Fondeador/All")
+                    .then(x => x.json())
+                    .then(res => {
+                        vm.fondeadores = res;
+                        vm.loaderFondeador = false;
+                    });
+
+                fetch(this.api + "Producto/All")
+                    .then(x => x.json())
+                    .then(res => {
+                        vm.productos = res;
+                        vm.loaderProducto = false;
+                    });
+            }
+        });
+    </script>
+
+}

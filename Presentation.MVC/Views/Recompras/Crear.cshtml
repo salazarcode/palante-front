@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-3">
                     <label for="desde"><b>Búsqueda:</b></label>
-                    <textarea class="form-control" style="height:38px" v-model="query" placeholder="id, credito, nombre...">{{query}}</textarea>
+                    <textarea class="form-control" style="height:38px" v-model="query" placeholder="id, credito, nombre..." @@keyup="changeQuery">{{query}}</textarea>
                     <button type="button" style="margin-top:5px" class="btn btn-success btn-sm" @@click="Buscar">Buscar</button>
                 </div>
                 <div class="col-md-3">
@@ -121,49 +121,138 @@
                 </div>
                 <div class="col-md-6">
                     <div v-if="credito != ''">
-                        <h5>Cálculos:</h5>
-
+                        <b>Datos del crédito:</b>
                         <table id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
 
                             <tr>
                                 <th scope="row">Crédito</th>
-                                <td>{{credito.codigoFondeador}}</td>
-                            </tr>
-
-                            <tr>
                                 <th scope="row">ID</th>
-                                <td>{{credito.id}}</td>
+                                <th scope="row">Nombres</th>
                             </tr>
 
                             <tr>
-                                <th scope="row">Nombres</th>
+                                <td>{{credito.codigoFondeador}}</td>
+                                <td>{{credito.id}}</td>
                                 <td>{{credito.nombres}}</td>
                             </tr>
+                        </table>
 
+
+                        <b>Resumen:</b>
+                        <table id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
                             <tr>
-                                <th scope="row">Cuotas Vencidas y vigente No Pagadas</th>
+                                <th scope="row">Capital total:</th>
                                 <td>
+                                    <input type="number"
+                                           style="height:25px"
+                                           class="form-control" 
+                                           v-model="credito.CapitalTotal"
+                                           @@keyup="SetPrecio(credito)"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Per. Gracia total:</th>
+                                <td>
+                                    <input type="number"
+                                           style="height:25px"
+                                           class="form-control"
+                                           v-model="credito.GraciaTotal"
+                                           @@keyup="SetPrecio(credito)"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Interés total:</th>
+                                <td>
+                                    <input type="number"
+                                           style="height:25px"
+                                           class="form-control"
+                                           v-model="credito.InteresTotal"
+                                           @@keyup="SetPrecio(credito)"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    Precio de Recompra
+                                    <i 
+                                       style="color:blue;cursor:pointer" 
+                                       class="fa fa-retweet"
+                                       title="Restaurar valor estandar"
+                                       @@click="SetPrecioRecompra(credito)"
+                                       ></i>
+                                </th>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-md-11">
+                                            <input type="number"
+                                                   style="height:25px"
+                                                   class="form-control primary" 
+                                                   disabled
+                                                   v-model="credito.precioRecompra" />
+                                        </div>
+                                        <div class="col-md-1">
+                                            <input type="checkbox"
+                                                   data-toggle="tooltip" data-placement="top" title="Activar Cálculo Diario"
+                                                   :disabled="credito.Interes == 0"
+                                                   id="checkCalculoDiario"
+                                                   v-model="credito.CalcularDiariamente"
+                                                   @@change="SetPrecioRecompra(credito)"
+                                                   style="width: 15px;height:15px;float:right">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
 
-                                    <b>{{formatMoney(credito.ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia) || 0}}</b>
+                        <b>Cuotas pendientes:</b>
+                        <table id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
+
+                            <tr class="table-warning">
+                                <th scope="row">Capital</th>
+                                <td>
+                                    {{formatMoney(credito.capitalVigenteVencido) || 0}}
+
+                                    <input type="checkbox"
+                                           data-toggle="tooltip" data-placement="top" title="Con Capital"
+                                           :checked="true"
+                                           disabled
+                                           style="width: 15px;height:15px;float:right">
+                                </td>
+                            </tr>
+                            <tr class="table-warning">
+                                <th scope="row">Periodo de Gracia</th>
+                                <td>
+                                    {{formatMoney(credito.graciaVigenteVencido) || 0}}
                                     <input type="checkbox"
                                            data-toggle="tooltip" data-placement="top" title="Con Periodo de Gracia"
                                            id="checkConPeriodoGracia"
                                            v-model="credito.ConPeriodoGracia"
-                                           @@change="CalcularDiario(credito)"
+                                           @@change="SetPrecioRecompra(credito)"
                                            style="width: 15px;height:15px;float:right">
                                 </td>
                             </tr>
+                            <tr class="table-warning">
+                                <th scope="row">Interés</th>
+                                <td>
+                                    {{formatMoney(credito.interesVigenteVencido) || 0}}
 
-                            <tr>
-                                <th scope="row">Cuotas Por Vencer No Pagadas (Saldo capital)</th>
-                                <td>{{formatMoney(credito.capitalPorVencerSinPagar) || 0}}</td>
+                                    <input type="checkbox"
+                                           data-toggle="tooltip"
+                                           data-placement="top"
+                                           title="Con Interés"
+                                           :checked="!(credito.CalcularDiariamente)"
+                                           disabled
+                                           style="width: 15px;height:15px;float:right">
+                                </td>
                             </tr>
-
-                            <tr>
-                                <th scope="row">Capital total sin pagar</th>
-                                <td>{{formatMoney(credito.capitalSinPagar) || 0}}</td>
+                            <tr class="table-success">
+                                <th scope="row">Capital por vencer</th>
+                                <td>{{formatMoney(credito.capitalPorVencer) || 0}}</td>
                             </tr>
+                        </table>
 
+                        <b v-if="credito.CalcularDiariamente">Cálculo de interés diario:</b>
+
+                        <table v-if="credito.CalcularDiariamente" id="tablaCreditos" style="font-size:10pt;width:100%" class="table table-sm table-hover table-bordered">
                             <tr>
                                 <th scope="row">Último Pago</th>
                                 <td>{{fecha(credito.fechaUltimoPago) || 0}}</td>
@@ -181,34 +270,32 @@
 
                             <tr>
                                 <th scope="row">Tasa</th>
-                                <td>{{formatMoney(credito.nTasaComp) || 0}}</td>
+                                <td>
+                                    <input type="number"
+                                           class="form-control"
+                                           style="height:25px"
+                                           v-model="credito.nTasaComp"
+                                           @@keyup="Calcular(credito)" />
+                                </td>
                             </tr>
 
                             <tr>
                                 <th scope="row">Factor</th>
-                                <td>{{credito.Factor}}</td>
-                            </tr>
-
-                            <tr>
-                                <th scope="row">Interés</th>
-                                <td>{{formatMoney(credito.Interes.toFixed(2))}}</td>
-                            </tr>
-
-                            <tr>
-                                <th scope="row">Precio de Recompra</th>
                                 <td>
-                                    <b>{{formatMoney(credito.precioRecompra.toFixed(2))}}</b>
-                                    <input type="checkbox"
-                                           data-toggle="tooltip" data-placement="top" title="Activar Cálculo Diario"
-                                           :disabled="credito.Interes == 0"
-                                           id="checkCalculoDiario"
-                                           v-model="credito.CalcularDiariamente"
-                                           @@change="CalcularDiario(credito)"
-                                           style="width: 15px;height:15px;float:right">
+                                    {{credito.Factor}}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">Interés Cálculo Diario</th>
+                                <td>
+                                    {{formatMoney(credito.Interes)}}
                                 </td>
                             </tr>
                         </table>
                     </div>
+
+                    
                 </div>
             </div>
         </div>
@@ -256,6 +343,14 @@
                         checkEncontradosValue: false
                     },
                     methods: {
+                        changeQuery: function () {
+                            let arr = this.query.split('\n');
+                            arr.forEach((item, index) => {
+                                if (item.trim() == "")
+                                    arr.splice(index, 1);
+                            });
+                            this.query = arr.join("\n");
+                        },
                         checkEncontrados: function () {
                             if (this.checkEncontradosValue) {
                                 this.encontrados.map(x => x.codigoFondeador)
@@ -272,18 +367,6 @@
                                 });
                             }
                         },
-                        CalcularDiario: function (credito) {
-                            credito.precioRecompra = 0;
-
-                            if (credito.capitalPorVencerSinPagar > 0) {
-                                credito.precioRecompra += parseFloat(credito.ConPeriodoGracia ? credito.cuotasVencidasVigenteSinPagar : credito.cuotasVencidasVigenteSinPerGracia);
-                                credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
-                                credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
-                            } else {
-                                credito.precioRecompra += parseFloat(credito.capitalSinPagar);
-                                credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
-                            }
-                        },
                         CalcularSeleccionados: function () {
                             vm.creditos.filter(x => vm.checkedCreditos.includes(x.codigoFondeador)).forEach(credito => {
                                 let obj = this.creditos.find(x => x.codigoFondeador == credito.codigoFondeador);
@@ -295,20 +378,62 @@
                             }
                         },
                         Calcular: function (credito) {
-                            if ((new Date(credito.fechaUltimoPago)).getFullYear() != 1) {
-                                credito.DiferenciaDias = this.DiferenciaDias(credito.fechaUltimoPago, this.fechaCalculo);
-                                credito.Factor = Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1;
-                                credito.Interes = (Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1) * parseFloat(credito.capitalPorVencerSinPagar != 0 ? credito.capitalPorVencerSinPagar : credito.capitalSinPagar);
+                            credito.DiferenciaDias = this.DiferenciaDias(credito.fechaUltimoPago, this.fechaCalculo);
+
+                            console.log(credito.nTasaComp, credito.DiferenciaDias);
+
+                            credito.Factor = Math.pow(1 + parseFloat(credito.nTasaComp) / 100, parseFloat(credito.DiferenciaDias) / parseFloat(360)) - 1;
+
+                            let base = 1 + parseFloat(credito.nTasaComp) / 100
+                            let exponente = parseFloat(credito.DiferenciaDias) / parseFloat(360)
+
+                            let a = Math.pow(base, exponente) - 1;
+                            let b = parseFloat(credito.capitalPorVencer + credito.capitalVigenteVencido);
+
+                            credito.Interes = a * b;
+
+                            this.SetPrecioRecompra(credito);
+                        },
+                        SetTotales: function (credito) {
+                            //CAPITAL TOTAL
+                            if (credito.CapitalTotal == 0) {
+                                credito.CapitalTotal = 0;
+                                credito.CapitalTotal += parseFloat(credito.capitalVigenteVencido);
+                                credito.CapitalTotal += parseFloat(credito.capitalPorVencer);
+                                credito.CapitalTotal = parseFloat(credito.CapitalTotal.toFixed(2))
                             }
 
-                            credito.precioRecompra = 0;
-                            credito.precioRecompra += parseFloat(credito.cuotasVencidasVigenteSinPagar);
-                            credito.precioRecompra += parseFloat(credito.capitalPorVencerSinPagar);
-                            credito.precioRecompra += credito.CalcularDiariamente ? parseFloat(credito.Interes) : 0;
+                            //GRACIA TOTAL
+                            if (credito.GraciaTotal == 0) {
+                                credito.GraciaTotal = 0;
+                                if (credito.capitalPorVencer > 0) {
+                                    credito.GraciaTotal += credito.ConPeriodoGracia ? parseFloat(credito.graciaVigenteVencido) : 0;
+                                }
+                                credito.GraciaTotal = parseFloat(credito.GraciaTotal.toFixed(2))
+                            }
+
+                            //INTERES TOTAL
+                            if (credito.InteresTotal == 0) {
+                                credito.InteresTotal = 0;
+                                credito.InteresTotal += credito.CalcularDiariamente ? parseFloat(credito.Interes) : parseFloat(credito.interesVigenteVencido);
+                                credito.InteresTotal = parseFloat(credito.InteresTotal.toFixed(2));
+                            }
 
                         },
+                        SetPrecioRecompra: function (credito) {
+                            
+                            this.SetTotales(credito);
+                            //----------------------------------------------------------------------------------------------------------------------------------
+
+                            this.SetPrecio(credito);
+                        },
+                        SetPrecio: function (credito) {
+                            credito.precioRecompra = 0;
+                            credito.precioRecompra = parseFloat(credito.CapitalTotal) + parseFloat(credito.GraciaTotal) + parseFloat(credito.InteresTotal);
+                            credito.precioRecompra = parseFloat(credito.precioRecompra.toFixed(2));
+                        },
                         formatMoney: function (num) {
-                            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                            return parseFloat(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                         },
                         fecha: function (date) {
                             return moment(date).format("DD/MM/YYYY")
@@ -328,7 +453,7 @@
                                 case 16:
                                     return "Prejudicial";
                             }
-                        },
+                        },  
                         NEstadoCuota: function (estadoCuota) {
                             switch (estadoCuota) {
                                 case 1:
@@ -386,25 +511,39 @@
                             return fecha2.diff(fecha1, 'days');
                         },
                         Guardar: async function () {
-                            let linea = vm.creditos
-                                .filter(x => vm.checkedCreditos.includes(x.codigoFondeador))
-                                .map(e => [e.codigoFondeador, e.precioRecompra.toFixed(2)].join(","))
-                                .join(";");
 
-                            var formData = new FormData();
-                            formData.append('RecompraID', 0);
-                            formData.append('FondeadorID', vm.f);
-                            formData.append('ProductoID', vm.p);
-                            formData.append('Creditos', linea);
-                            formData.append('CreadoPor', JSON.parse(localStorage.getItem("usuario")).nombre);
-                            formData.append('FechaCalculo', this.fechaCalculo);
+                            let res = await fetch(this.api + "Recompras/Save",
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    fondeadorID: vm.f,
+                                    productoID: vm.p,
+                                    fechaCalculo: this.fechaCalculo,
+                                    creadoPor: JSON.parse(localStorage.getItem("usuario")).nombre,
+                                    detalles: vm.creditos
+                                        .filter(x => vm.checkedCreditos.includes(x.codigoFondeador))
+                                        .map(e => {
+                                            return {
+                                                codigoFondeador: e.codigoFondeador,
 
-                            let res = await fetch(this.api + "Recompras/Save", {
-                                method: 'POST',
-                                body: formData
-                            }).then(response => response.json());
+                                                CapitalVigenteVencido: parseFloat(e.capitalVigenteVencido),
+                                                GraciaVigenteVencido: parseFloat(e.graciaVigenteVencido),
+                                                InteresVigenteVencido: parseFloat(e.interesVigenteVencido),
+                                                CapitalPorVencer: parseFloat(e.capitalPorVencer),
+                                                Tasa: parseFloat(e.nTasaComp),
 
-                            window.location.href = '@(ViewBag.domain+"Recompras")';
+                                                CapitalTotal: parseFloat(e.CapitalTotal),
+                                                GraciaTotal: parseFloat(e.GraciaTotal),
+                                                InteresTotal: parseFloat(e.InteresTotal),
+                                                PrecioRecompra: parseFloat(e.precioRecompra)
+                                            }
+                                        })
+                                })
+                                
+                                
+                            });
+                            window.location.href = '@(ViewBag.domain+"Recompras")';                            
                         }
                     },
                     computed: {
@@ -437,15 +576,21 @@
                             method: 'POST',
                             body: formData
                         })
-                            .then(response => response.json());
+                        .then(response => response.json());
 
                         creditosRes.forEach(credito => {
                             credito.DiferenciaDias = 0;
                             credito.Factor = 0;
                             credito.Interes = 0;
-                            credito.PrecioRecompra = 0;
+                            credito.precioRecompra = 0;
                             credito.CalcularDiariamente = credito.esReprogramado;
                             credito.ConPeriodoGracia = true;
+                            if ((new Date(credito.fechaUltimoPago)).getFullYear() == 1)
+                                credito.fechaUltimoPago = credito.fechaVenta;
+
+                            credito.CapitalTotal = 0;
+                            credito.GraciaTotal = 0;
+                            credito.InteresTotal = 0;
                         });
 
 

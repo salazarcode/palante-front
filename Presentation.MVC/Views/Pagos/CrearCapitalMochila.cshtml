@@ -204,19 +204,21 @@
                             this.cuotas.forEach(e => {
                                 e.aPagar = 0;
                             });
-
+                            console.log(monto);
                             for (var i = 0; i < this.cuotas.length; i++) {
                                 if (monto > 0) {
                                     if (monto >= this.cuotas[i].saldo) {
                                         monto -= this.cuotas[i].saldo;
                                         this.cuotas[i].aPagar = this.cuotas[i].saldo
                                     } else {
+                                        console.log("previsto");
                                         this.cuotas[i].aPagar = monto;
                                         monto = 0;
+                                        return;
                                     }
                                 }
                                 else
-                                    break;
+                                    return;
                             }
                         },
                         ChangeChecked: async function () {
@@ -362,7 +364,7 @@
                             });
                         },
                         formatMoney: function (num) {
-                            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                            return (Math.round((num + Number.EPSILON) * 100) / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                         },
                         GetDate: function (strDate) {
                             return moment(strDate).format("DD-MM-YYYY");
@@ -392,20 +394,24 @@
                                 });
 
                             this.loaderGuardar = true;
-
-                            await fetch(this.api + "Pagos/Save",
+                            
+                            let res = await fetch(this.api + "Pagos/Save",
                                 {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({
-                                        pagoID: 0,
+                                        pagoID: parseInt(vm.PagoID),
                                         fondeadorID: parseInt(vm.f),
                                         productoID: parseInt(vm.p),
                                         esMochila: true,
                                         creador: JSON.parse(localStorage.getItem("usuario")).nombre,
                                         pagos: detalles
                                     })
-                                });
+                                })
+                                .then(x => x.json());
+
+                            console.log(res);
+                            console.log("Versión front: 07-08-2020 09:32")
 
                             this.loaderGuardar = false;
                             window.location.href = '@(ViewBag.domain+"Pagos")';

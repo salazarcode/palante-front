@@ -64,11 +64,6 @@
                     <label for="suma" style="">Pago Total:</label>
                     <input type="text" id="suma" class="form-control" :value="suma" style="width:100%;" :disabled="true" />
 
-                    @*<button class="btn btn-primary"
-            style="width:100%;margin-top:15px"
-            @@click="guardar"
-            :disabled="loaderCuotas">Guardar</button>*@
-
                     <button class="btn btn-success"
                             style="width:100%;margin-top:15px"
                             @@click="guardar($event)"
@@ -306,6 +301,7 @@
                 </div>
             </div>
         </div>
+    </div>
 
         @section Scripts{
 
@@ -617,7 +613,7 @@
 
                             this.loaderGuardar = true;
 
-                            await fetch(this.api + "Pagos/Save",
+                            let res = await fetch(this.api + "Pagos/Save",
                             {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },

@@ -34,7 +34,7 @@
                             <td>{{GetDate(r.creado)}}</td>
                             <td>{{GetDate(r.modificado)}}</td>
                             <td>{{GetDate(r.fechaCierre) == '01-01-0001' ? 'No cerrada' : GetDate(r.fechaCierre)}}</td>
-                            <td>{{formatMoney(r.creditos.map(x=>x.precioRecompra).reduce((x,y)=>x+y).toFixed(2))}}</td>
+                            <td>{{formatMoney(r.detalles.map(x=>x.precioRecompra).reduce((a,b)=>parseFloat(a)+parseFloat(b)))}}</td>
                             <td>
                                 <a href="#" @@click="verDetalle(index)">Ver</a>
                             </td>
@@ -130,18 +130,34 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="overflow-x:auto">
                         <table class="table table-hover table-bordered table-sm" id="data" style="font-size:10pt">
                             <thead>
                                 <tr class="table-primary">
                                     <th>Codigo Fondeador</th>
-                                    <th>Monto</th>
+                                    <th>tasa</th>
+                                    <th>Capital Vigente Vencido</th>
+                                    <th>Gracia Vigente Vencido</th>
+                                    <th>Interes Vigente Vencido</th>
+                                    <th>Capital Por Vencer</th>
+                                    <th>Capital Total</th>
+                                    <th>Gracia Total</th>
+                                    <th>Interes Total</th>
+                                    <th>Precio</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(c, index) in detalle.creditos">
+                                <tr v-for="(c, index) in detalle.detalles">
                                     <td>{{c.codigoFondeador}}</td>
-                                    <td>{{formatMoney(c.precioRecompra.toFixed(2))}}</td>
+                                    <td>{{formatMoney(c.tasa)}}</td>
+                                    <td>{{formatMoney(c.capitalVigenteVencido)}}</td>
+                                    <td>{{formatMoney(c.graciaVigenteVencido)}}</td>
+                                    <td>{{formatMoney(c.interesVigenteVencido)}}</td>
+                                    <td>{{formatMoney(c.capitalPorVencer)}}</td>
+                                    <td>{{formatMoney(c.capitalTotal)}}</td>
+                                    <td>{{formatMoney(c.graciaTotal)}}</td>
+                                    <td>{{formatMoney(c.interesTotal)}}</td>
+                                    <td>{{formatMoney(c.precioRecompra)}}</td>
                                 </tr>
                             </tbody>
                         </table>
